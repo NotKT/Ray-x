@@ -14,11 +14,17 @@ jobs:
         run: |
           wget https://services.gradle.org/distributions/gradle-8.14-bin.zip -q
           unzip -q gradle-8.14-bin.zip
-          ./gradle-8.14/bin/gradle wrapper
+          BUILD_DIR=$(find . -name "settings.gradle" | grep -v ".gradle/" | head -1 | xargs dirname)
+          echo "Building in: $BUILD_DIR"
+          cd $BUILD_DIR
+          /home/runner/work/Ray-x/Ray-x/gradle-8.14/bin/gradle wrapper
       - name: Build
-        run: ./gradlew build
+        run: |
+          BUILD_DIR=$(find . -name "settings.gradle" | grep -v ".gradle/" | head -1 | xargs dirname)
+          cd $BUILD_DIR
+          ./gradlew build
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: xray-mod
-          path: build/libs/*[^s].jar
+          path: "**/build/libs/*[^s].jar"
