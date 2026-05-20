@@ -5,7 +5,65 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
+import net.minecraft.client.gui.widget.ButtonWidget;package com.xraymod.client.gui;
+
+import com.xraymod.client.XRayState;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.EntryListWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.text.Text;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class XRayConfigScreen extends Screen {
+
+    private final Screen parent;
+    private TextFieldWidget addField;
+    private BlockList blockList;
+
+    public XRayConfigScreen(Screen parent) {
+        super(Text.literal("XRay Whitelist Config"));
+        this.parent = parent;
+    }
+
+    @Override
+    protected void init() {
+        blockList = new BlockList(client, width, height - 80, 40, 20);
+        addDrawableChild(blockList);
+
+        addField = new TextFieldWidget(
+            textRenderer, width / 2 - 150, 8, 240, 18,
+            Text.literal("Block ID"));
+        addField.setPlaceholder(Text.literal("minecraft:diamond_ore"));
+        addDrawableChild(addField);
+        setInitialFocus(addField);
+
+        addDrawableChild(ButtonWidget.builder(Text.literal("Add"), btn -> {
+            String id = addField.getText().trim().toLowerCase();
+            if (!id.isEmpty()) {
+                XRayState.config.addBlock(id);
+                addField.setText("");
+                blockList.refresh();
+            }
+        }).dimensions(width / 2 + 95, 7, 55, 20).build());
+
+        addDrawableChild(ButtonWidget.builder(Text.literal("Reset Defaults"), btn -> {
+            XRayState.config.resetToDefaults();
+            blockList.refresh();
+        }).dimensions(width / 2 - 150, height - 28, 120, 20).build());
+
+        addDrawableChild(ButtonWidget.builder(Text.literal("Done"), btn -> {
+            assert client != null;
+            client.setScreen(parent);
+        }).dimensions(width / 2 + 35, height - 28, 60, 20).build());
+    }
+
+    @
 import net.minecraft.client.gui.widget.EntryListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
