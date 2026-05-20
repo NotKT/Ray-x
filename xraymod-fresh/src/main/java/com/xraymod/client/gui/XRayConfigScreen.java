@@ -90,6 +90,7 @@ public class XRayConfigScreen extends Screen {
         public void appendClickableNarrations(NarrationMessageBuilder builder) {}
 
         class BlockEntry extends EntryListWidget.Entry<BlockEntry> {
+
             private final String blockId;
             private final ButtonWidget removeBtn;
 
@@ -104,3 +105,29 @@ public class XRayConfigScreen extends Screen {
             @Override
             public void render(DrawContext context, int index, int y, int x,
                                int entryWidth, int entryHeight,
+                               int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                context.drawTextWithShadow(textRenderer,
+                    Text.literal(blockId), x + 4, y + 4, 0xFFFFFF);
+                removeBtn.setX(x + entryWidth - 22);
+                removeBtn.setY(y + 1);
+                removeBtn.render(context, mouseX, mouseY, tickDelta);
+            }
+
+            @Override
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+                if (mouseX >= removeBtn.getX() && mouseX <= removeBtn.getX() + 20
+                    && mouseY >= removeBtn.getY() && mouseY <= removeBtn.getY() + 18) {
+                    XRayState.config.removeBlock(blockId);
+                    refresh();
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public Text getNarration() {
+                return Text.literal(blockId);
+            }
+        }
+    }
+}
