@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "xraymod",
   "version": "${version}",
-  "name": "XRay Mod",
+  "name": "KPS+",
   "description": "Hold X to make blocks invisible. Z to configure whitelist.",
   "authors": ["You"],
   "license": "MIT",
