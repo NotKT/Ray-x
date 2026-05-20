@@ -95,7 +95,6 @@ public class XRayConfigScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
     }
 
-    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         List<String> blocks = getSortedBlocks();
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
@@ -109,7 +108,7 @@ public class XRayConfigScreen extends Screen {
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return false;
     }
 
     @Override
