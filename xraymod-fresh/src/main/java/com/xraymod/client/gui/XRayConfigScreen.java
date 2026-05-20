@@ -110,7 +110,6 @@ public class XRayConfigScreen extends Screen {
                     Text.literal("X"), btnX + 6, y + 4, 0xFFFFFF);
             }
 
-            @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 int x = getRowLeft();
                 int entryIndex = BlockList.this.children().indexOf(this);
@@ -126,7 +125,6 @@ public class XRayConfigScreen extends Screen {
                 return false;
             }
 
-            @Override
             public Text getNarration() {
                 return Text.literal(blockId);
             }
