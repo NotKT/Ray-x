@@ -92,31 +92,31 @@ public class XRayConfigScreen extends Screen {
         class BlockEntry extends EntryListWidget.Entry<BlockEntry> {
 
             private final String blockId;
-            private final ButtonWidget removeBtn;
 
             BlockEntry(String blockId) {
                 this.blockId = blockId;
-                this.removeBtn = ButtonWidget.builder(Text.literal("X"), btn -> {
-                    XRayState.config.removeBlock(blockId);
-                    refresh();
-                }).dimensions(0, 0, 20, 18).build();
             }
 
             @Override
-            public void render(DrawContext context, int index, int y, int x,
-                               int entryWidth, int entryHeight,
-                               int mouseX, int mouseY, boolean hovered, float tickProgress) {
+            public void render(DrawContext context, int index, boolean hovered, float tickProgress) {
+                int x = getRowLeft();
+                int y = getRowTop(index);
                 context.drawTextWithShadow(textRenderer,
                     Text.literal(blockId), x + 4, y + 4, 0xFFFFFF);
-                removeBtn.setX(x + entryWidth - 22);
-                removeBtn.setY(y + 1);
-                removeBtn.render(context, mouseX, mouseY, tickProgress);
+
+                // Red remove button area
+                context.fill(x + getRowWidth() - 22, y,
+                    x + getRowWidth(), y + 18, 0xAACC3333);
+                context.drawTextWithShadow(textRenderer,
+                    Text.literal("X"), x + getRowWidth() - 14, y + 4, 0xFFFFFF);
             }
 
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                if (mouseX >= removeBtn.getX() && mouseX <= removeBtn.getX() + 20
-                    && mouseY >= removeBtn.getY() && mouseY <= removeBtn.getY() + 18) {
+                int x = getRowLeft();
+                int y = getRowTop(BlockList.this.children().indexOf(this));
+                if (mouseX >= x + getRowWidth() - 22 && mouseX <= x + getRowWidth()
+                    && mouseY >= y && mouseY <= y + 18) {
                     XRayState.config.removeBlock(blockId);
                     refresh();
                     return true;
