@@ -21,10 +21,23 @@ public abstract class BlockRenderMixin {
     )
     private void xray_filterBlockState(BlockPos pos, CallbackInfoReturnable<BlockState> cir) {
         if (!XRayState.active) return;
+
         BlockState state = cir.getReturnValue();
         if (state == null || state.isAir()) return;
+
+        // Check chunk range
+        int blockChunkX = pos.getX() >> 4;
+        int blockChunkZ = pos.getZ() >> 4;
+        int range = XRayState.config != null ? XRayState.config.getChunkRange() : 6;
+
+        int dx = Math.abs(blockChunkX - XRayState.playerChunkX);
+        int dz = Math.abs(blockChunkZ - XRayState.playerChunkZ);
+        if (dx > range || dz > range) return; // outside range, render normally
+
+        // Check whitelist
         String blockId = Registries.BLOCK.getId(state.getBlock()).toString();
         if (XRayState.config != null && XRayState.config.isVisible(blockId)) return;
+
         cir.setReturnValue(Blocks.AIR.getDefaultState());
     }
 }
