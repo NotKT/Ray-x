@@ -26,6 +26,7 @@ public class XRayConfigScreen extends Screen {
 
     @Override
     protected void init() {
+        // Clears ALL children every time so no duplicate buttons
         clearChildren();
 
         addField = new TextFieldWidget(
@@ -40,14 +41,14 @@ public class XRayConfigScreen extends Screen {
             if (!id.isEmpty()) {
                 XRayState.config.addBlock(id);
                 addField.setText("");
-                rebuildButtons();
+                init();
             }
         }).dimensions(width / 2 + 95, 9, 55, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset Defaults"), btn -> {
             XRayState.config.resetToDefaults();
             scrollOffset = 0;
-            rebuildButtons();
+            init();
         }).dimensions(width / 2 - 60, height - 30, 120, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Done"), btn -> {
@@ -55,22 +56,19 @@ public class XRayConfigScreen extends Screen {
             client.setScreen(parent);
         }).dimensions(width / 2 + 65, height - 30, 60, 20).build());
 
-        rebuildButtons();
-    }
-
-    private void rebuildButtons() {
-        // Remove old remove buttons by reinitializing
-        // Keep track via re-init
+        // Add X buttons for currently visible rows only
         List<String> blocks = getSortedBlocks();
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
         int visibleRows = listHeight / ROW_HEIGHT;
+        int maxScroll = Math.max(0, blocks.size() - visibleRows);
+        scrollOffset = Math.min(scrollOffset, maxScroll);
 
         for (int i = 0; i < visibleRows && (i + scrollOffset) < blocks.size(); i++) {
             final String blockId = blocks.get(i + scrollOffset);
             int y = LIST_TOP + i * ROW_HEIGHT;
             addDrawableChild(ButtonWidget.builder(Text.literal("X"), btn -> {
                 XRayState.config.removeBlock(blockId);
-                rebuildButtons();
+                init();
             }).dimensions(width - 35, y + 2, 28, 18).build());
         }
     }
@@ -91,8 +89,6 @@ public class XRayConfigScreen extends Screen {
         List<String> blocks = getSortedBlocks();
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
         int visibleRows = listHeight / ROW_HEIGHT;
-        int maxScroll = Math.max(0, blocks.size() - visibleRows);
-        scrollOffset = Math.min(scrollOffset, maxScroll);
 
         for (int i = 0; i < visibleRows && (i + scrollOffset) < blocks.size(); i++) {
             String blockId = blocks.get(i + scrollOffset);
@@ -118,7 +114,7 @@ public class XRayConfigScreen extends Screen {
         int maxScroll = Math.max(0, blocks.size() - visibleRows);
         scrollOffset = Math.max(0, Math.min(maxScroll,
             scrollOffset - (int) verticalAmount));
-        rebuildButtons();
+        init();
         return true;
     }
 
