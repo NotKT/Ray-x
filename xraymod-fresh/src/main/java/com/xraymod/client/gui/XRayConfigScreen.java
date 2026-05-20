@@ -7,6 +7,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.EntryListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.narration.NarrationMessageBuilder;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -58,14 +59,11 @@ public class XRayConfigScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(textRenderer,
-            this.title, width / 2, height - 52, 0xFFFFFF);
     }
 
     @Override
     public boolean shouldPause() { return false; }
 
-    // Inner list widget
     class BlockList extends EntryListWidget<BlockList.BlockEntry> {
 
         public BlockList(MinecraftClient client, int width, int height, int top, int itemHeight) {
@@ -88,6 +86,9 @@ public class XRayConfigScreen extends Screen {
         @Override
         protected int getScrollbarX() { return width - 10; }
 
+        @Override
+        public void appendClickableNarrations(NarrationMessageBuilder builder) {}
+
         class BlockEntry extends EntryListWidget.Entry<BlockEntry> {
             private final String blockId;
             private final ButtonWidget removeBtn;
@@ -102,24 +103,4 @@ public class XRayConfigScreen extends Screen {
 
             @Override
             public void render(DrawContext context, int index, int y, int x,
-                               int entryWidth, int entryHeight, int mouseX, int mouseY,
-                               boolean hovered, float tickDelta) {
-                context.drawTextWithShadow(textRenderer,
-                    Text.literal(blockId), x + 4, y + 4, 0xFFFFFF);
-                removeBtn.setX(x + entryWidth - 22);
-                removeBtn.setY(y + 1);
-                removeBtn.render(context, mouseX, mouseY, tickDelta);
-            }
-
-            @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                return removeBtn.mouseClicked(mouseX, mouseY, button);
-            }
-
-            @Override
-            public Text getNarration() {
-                return Text.literal(blockId);
-            }
-        }
-    }
-}
+                               int entryWidth, int entryHeight,
