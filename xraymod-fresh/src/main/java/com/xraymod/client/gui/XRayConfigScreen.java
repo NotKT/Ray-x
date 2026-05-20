@@ -17,7 +17,7 @@ public class XRayConfigScreen extends Screen {
     private TextFieldWidget rangeField;
     private int scrollOffset = 0;
     private static final int ROW_HEIGHT = 22;
-    private static final int LIST_TOP = 80;
+    private static final int LIST_TOP = 95;
     private static final int LIST_BOTTOM_MARGIN = 50;
 
     public XRayConfigScreen(Screen parent) {
@@ -47,20 +47,20 @@ public class XRayConfigScreen extends Screen {
             }
         }).dimensions(width / 2 + 55, 9, 55, 20).build());
 
-        // Range label + buttons
-        int rangeY = 38;
-        // Preset buttons
-        for (int i = 0; i < new int[]{3, 6, 9, 12}.length; i++) {
-            final int range = new int[]{3, 6, 9, 12}[i];
+        // Range preset buttons row
+        int rangeY = 60;
+        int[] presets = {3, 6, 9, 12};
+        for (int i = 0; i < presets.length; i++) {
+            final int range = presets[i];
             addDrawableChild(ButtonWidget.builder(Text.literal(range + "c"), btn -> {
                 XRayState.config.setChunkRange(range);
                 init();
-            }).dimensions(width / 2 - 100 + i * 45, rangeY, 40, 20).build());
+            }).dimensions(width / 2 - 90 + i * 45, rangeY, 40, 20).build());
         }
 
         // Custom range field
         rangeField = new TextFieldWidget(
-            textRenderer, width / 2 + 85, rangeY, 40, 18,
+            textRenderer, width / 2 + 95, rangeY, 35, 18,
             Text.literal("Range"));
         rangeField.setPlaceholder(Text.literal("6"));
         rangeField.setText(String.valueOf(XRayState.config.getChunkRange()));
@@ -73,7 +73,7 @@ public class XRayConfigScreen extends Screen {
                 XRayState.config.setChunkRange(val);
                 init();
             } catch (NumberFormatException ignored) {}
-        }).dimensions(width / 2 + 128, rangeY, 30, 20).build());
+        }).dimensions(width / 2 + 133, rangeY, 30, 20).build());
 
         // Reset defaults
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset Defaults"), btn -> {
@@ -120,11 +120,12 @@ public class XRayConfigScreen extends Screen {
         context.fill(0, height - LIST_BOTTOM_MARGIN + 5, width,
             height - LIST_BOTTOM_MARGIN + 6, 0x88FFFFFF);
 
-        // Range label
-        context.drawText(textRenderer, "XRay Range:  ", width / 2 - 148, 44, 0xFFFFAA00, true);
+        // Labels
         context.drawText(textRenderer,
-            "Current: " + XRayState.config.getChunkRange() + " chunks",
-            width / 2 - 148, 28, 0xFF00BFFF, true);
+            "Add Block:", 10, 14, 0xFF00BFFF, true);
+        context.drawText(textRenderer,
+            "XRay Range: (current: " + XRayState.config.getChunkRange() + " chunks)",
+            10, 46, 0xFFFFAA00, true);
 
         // Block list
         List<String> blocks = getSortedBlocks();
