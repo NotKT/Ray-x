@@ -54,10 +54,12 @@ public class XRayClient implements ClientModInitializer {
                     if (originalGamma < 0) {
                         originalGamma = client.options.getGamma().getValue();
                     }
-                    client.options.getGamma().setValue(FULLBRIGHT_GAMMA);
+                    client.options.getGamma().setValue(100.0);
+                    client.options.write();
                 } else {
                     if (originalGamma >= 0) {
                         client.options.getGamma().setValue(originalGamma);
+                        client.options.write();
                         originalGamma = -1;
                     }
                 }
