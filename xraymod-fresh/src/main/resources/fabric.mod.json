@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "xraymod",
-  "version": "${1.0.0}",
+  "version": "1.0.0",
   "name": "KPS+",
   "description": "FPS Boosting and Utility Mod Created By KT",
   "authors": ["KT"],
