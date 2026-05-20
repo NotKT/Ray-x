@@ -20,6 +20,7 @@ public class XRayConfig {
 
     private Set<String> visibleBlocks = new HashSet<>(DEFAULT_VISIBLE);
     private int chunkRange = 6;
+    private boolean fullbright = false;
 
     public static final Set<String> DEFAULT_VISIBLE = Set.of(
         "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore",
@@ -41,15 +42,24 @@ public class XRayConfig {
     public boolean isVisible(String blockId) { return visibleBlocks.contains(blockId); }
     public void addBlock(String blockId) { visibleBlocks.add(blockId); save(); }
     public void removeBlock(String blockId) { visibleBlocks.remove(blockId); save(); }
-    public void resetToDefaults() { visibleBlocks = new HashSet<>(DEFAULT_VISIBLE); chunkRange = 6; save(); }
     public int getChunkRange() { return chunkRange; }
     public void setChunkRange(int range) { this.chunkRange = Math.max(1, Math.min(32, range)); save(); }
+    public boolean isFullbright() { return fullbright; }
+    public void setFullbright(boolean fullbright) { this.fullbright = fullbright; save(); }
+
+    public void resetToDefaults() {
+        visibleBlocks = new HashSet<>(DEFAULT_VISIBLE);
+        chunkRange = 6;
+        fullbright = false;
+        save();
+    }
 
     public void save() {
         try (Writer w = new FileWriter(CONFIG_PATH.toFile())) {
             JsonObject obj = new JsonObject();
             obj.add("visibleBlocks", GSON.toJsonTree(visibleBlocks));
             obj.addProperty("chunkRange", chunkRange);
+            obj.addProperty("fullbright", fullbright);
             GSON.toJson(obj, w);
         } catch (IOException e) {
             System.err.println("[KPS+] Save failed: " + e.getMessage());
@@ -69,6 +79,9 @@ public class XRayConfig {
             }
             if (obj.has("chunkRange")) {
                 cfg.chunkRange = obj.get("chunkRange").getAsInt();
+            }
+            if (obj.has("fullbright")) {
+                cfg.fullbright = obj.get("fullbright").getAsBoolean();
             }
         } catch (IOException e) {
             System.err.println("[KPS+] Load failed: " + e.getMessage());
