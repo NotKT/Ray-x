@@ -1,12 +1,9 @@
 package com.xraymod.client.gui;
 
 import com.xraymod.client.XRayState;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.EntryListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 
@@ -17,7 +14,10 @@ public class XRayConfigScreen extends Screen {
 
     private final Screen parent;
     private TextFieldWidget addField;
-    private BlockList blockList;
+    private int scrollOffset = 0;
+    private static final int ROW_HEIGHT = 22;
+    private static final int LIST_TOP = 50;
+    private static final int LIST_BOTTOM_MARGIN = 50;
 
     public XRayConfigScreen(Screen parent) {
         super(Text.literal("XRay Whitelist Config"));
@@ -26,11 +26,8 @@ public class XRayConfigScreen extends Screen {
 
     @Override
     protected void init() {
-        blockList = new BlockList(client, width, height - 80, 40, 20);
-        addDrawableChild(blockList);
-
         addField = new TextFieldWidget(
-            textRenderer, width / 2 - 150, 8, 240, 18,
+            textRenderer, width / 2 - 150, 10, 240, 18,
             Text.literal("Block ID"));
         addField.setPlaceholder(Text.literal("minecraft:diamond_ore"));
         addDrawableChild(addField);
@@ -41,93 +38,91 @@ public class XRayConfigScreen extends Screen {
             if (!id.isEmpty()) {
                 XRayState.config.addBlock(id);
                 addField.setText("");
-                blockList.refresh();
             }
-        }).dimensions(width / 2 + 95, 7, 55, 20).build());
+        }).dimensions(width / 2 + 95, 9, 55, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset Defaults"), btn -> {
             XRayState.config.resetToDefaults();
-            blockList.refresh();
-        }).dimensions(width / 2 - 150, height - 28, 120, 20).build());
+            scrollOffset = 0;
+        }).dimensions(width / 2 - 60, height - 30, 120, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Done"), btn -> {
             assert client != null;
             client.setScreen(parent);
-        }).dimensions(width / 2 + 35, height - 28, 60, 20).build());
+        }).dimensions(width / 2 + 65, height - 30, 60, 20).build());
+    }
+
+    private List<String> getSortedBlocks() {
+        List<String> blocks = new ArrayList<>(XRayState.config.getVisibleBlocks());
+        blocks.sort(String::compareTo);
+        return blocks;
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Dark background
+        context.fill(0, 0, width, height, 0xCC000000);
+
+        // Divider lines
+        context.fill(0, LIST_TOP - 5, width, LIST_TOP - 4, 0x88FFFFFF);
+        context.fill(0, height - LIST_BOTTOM_MARGIN + 5, width, height - LIST_BOTTOM_MARGIN + 6, 0x88FFFFFF);
+
+        List<String> blocks = getSortedBlocks();
+        int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
+        int visibleRows = listHeight / ROW_HEIGHT;
+        int maxScroll = Math.max(0, blocks.size() - visibleRows);
+        scrollOffset = Math.min(scrollOffset, maxScroll);
+
+        for (int i = 0; i < visibleRows && (i + scrollOffset) < blocks.size(); i++) {
+            String blockId = blocks.get(i + scrollOffset);
+            int y = LIST_TOP + i * ROW_HEIGHT;
+
+            // Row background
+            if (i % 2 == 0) {
+                context.fill(0, y, width, y + ROW_HEIGHT, 0x22FFFFFF);
+            }
+
+            // Block name — use bright yellow so it's definitely visible
+            context.fill(5, y + 3, 15, y + 13, 0xFFFFAA00);
+            context.drawText(textRenderer, blockId, 18, y + 6, 0xFFFFFF00, true);
+
+            // Red X button on right
+            context.fill(width - 35, y + 2, width - 5, y + ROW_HEIGHT - 2, 0xFF992222);
+            context.drawText(textRenderer, "X", width - 24, y + 6, 0xFFFFFFFF, true);
+        }
+
+        // Draw widgets on top
         super.render(context, mouseX, mouseY, delta);
     }
 
     @Override
-    public boolean shouldPause() { return false; }
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        List<String> blocks = getSortedBlocks();
+        int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
+        int visibleRows = listHeight / ROW_HEIGHT;
 
-    class BlockList extends EntryListWidget<BlockList.BlockEntry> {
-
-        public BlockList(MinecraftClient client, int width, int height, int top, int itemHeight) {
-            super(client, width, height, top, itemHeight);
-            refresh();
-        }
-
-        public void refresh() {
-            clearEntries();
-            List<String> blocks = new ArrayList<>(XRayState.config.getVisibleBlocks());
-            blocks.sort(String::compareTo);
-            for (String block : blocks) {
-                addEntry(new BlockEntry(block));
+        for (int i = 0; i < visibleRows && (i + scrollOffset) < blocks.size(); i++) {
+            int y = LIST_TOP + i * ROW_HEIGHT;
+            if (mouseX >= width - 35 && mouseX <= width - 5
+                && mouseY >= y + 2 && mouseY <= y + ROW_HEIGHT - 2) {
+                XRayState.config.removeBlock(blocks.get(i + scrollOffset));
+                return true;
             }
         }
-
-        @Override
-        public int getRowWidth() { return width - 60; }
-
-        @Override
-        protected int getScrollbarX() { return width - 10; }
-
-        @Override
-        public void appendClickableNarrations(NarrationMessageBuilder builder) {}
-
-        class BlockEntry extends EntryListWidget.Entry<BlockEntry> {
-
-            private final String blockId;
-
-            BlockEntry(String blockId) {
-                this.blockId = blockId;
-            }
-
-            @Override
-            public void render(DrawContext context, int index, int y, boolean hovered, float tickProgress) {
-                int x = getRowLeft();
-                int btnX = x + getRowWidth() - 24;
-
-                context.drawTextWithShadow(textRenderer,
-                    Text.literal(blockId), x + 4, y + 4, 0xFFFFFF);
-
-                context.fill(btnX, y, btnX + 20, y + 18, 0xAACC3333);
-                context.drawTextWithShadow(textRenderer,
-                    Text.literal("X"), btnX + 6, y + 4, 0xFFFFFF);
-            }
-
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                int x = getRowLeft();
-                int entryIndex = BlockList.this.children().indexOf(this);
-                int y = getRowTop(entryIndex);
-                int btnX = x + getRowWidth() - 24;
-
-                if (mouseX >= btnX && mouseX <= btnX + 20
-                    && mouseY >= y && mouseY <= y + 18) {
-                    XRayState.config.removeBlock(blockId);
-                    refresh();
-                    return true;
-                }
-                return false;
-            }
-
-            public Text getNarration() {
-                return Text.literal(blockId);
-            }
-        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY,
+                                  double horizontalAmount, double verticalAmount) {
+        List<String> blocks = getSortedBlocks();
+        int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
+        int visibleRows = listHeight / ROW_HEIGHT;
+        int maxScroll = Math.max(0, blocks.size() - visibleRows);
+        scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset - (int) verticalAmount));
+        return true;
+    }
+
+    @Override
+    public boolean shouldPause() { return false; }
 }
