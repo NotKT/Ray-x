@@ -49,10 +49,13 @@ public class XRayConfigScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.drawCenteredTextWithShadow(textRenderer,
+        if (client == null) return;
+
+        context.drawCenteredTextWithShadow(client.textRenderer,
             Text.literal("§bXRay §fWhitelist"), width / 2, 10, 0xFFFFFF);
-        context.drawCenteredTextWithShadow(textRenderer,
-            Text.literal("§7Hold §eX §7to activate"), width / 2, 24, 0xAAAAAA);
+        context.drawCenteredTextWithShadow(client.textRenderer,
+            Text.literal("§7Hold §eX §7to activate  |  These blocks stay visible"),
+            width / 2, 24, 0xAAAAAA);
 
         List<String> blocks = new ArrayList<>(XRayState.config.getVisibleBlocks());
         blocks.sort(String::compareTo);
@@ -65,10 +68,13 @@ public class XRayConfigScreen extends Screen {
             int y = LIST_TOP + 20 + i * ROW_HEIGHT;
             if (i % 2 == 0)
                 context.fill(width / 2 - 152, y - 1, width / 2 + 152, y + ROW_HEIGHT - 2, 0x22FFFFFF);
-            context.drawTextWithShadow(textRenderer, Text.literal(blockId), width / 2 - 148, y + 4, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer,
+                Text.literal(blockId), width / 2 - 148, y + 4, 0xFFFFFF);
             context.fill(width / 2 + 110, y, width / 2 + 150, y + ROW_HEIGHT - 2, 0xAACC3333);
-            context.drawCenteredTextWithShadow(textRenderer, Text.literal("X"), width / 2 + 130, y + 4, 0xFFFFFF);
+            context.drawCenteredTextWithShadow(client.textRenderer,
+                Text.literal("X"), width / 2 + 130, y + 4, 0xFFFFFF);
         }
+
         super.render(context, mouseX, mouseY, delta);
     }
 
