@@ -2,6 +2,7 @@ package com.xraymod.client.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -18,6 +19,7 @@ public class XRayConfig {
         FabricLoader.getInstance().getConfigDir().resolve("xraymod.json");
 
     private Set<String> visibleBlocks = new HashSet<>(DEFAULT_VISIBLE);
+    private int chunkRange = 6;
 
     public static final Set<String> DEFAULT_VISIBLE = Set.of(
         "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore",
@@ -39,13 +41,18 @@ public class XRayConfig {
     public boolean isVisible(String blockId) { return visibleBlocks.contains(blockId); }
     public void addBlock(String blockId) { visibleBlocks.add(blockId); save(); }
     public void removeBlock(String blockId) { visibleBlocks.remove(blockId); save(); }
-    public void resetToDefaults() { visibleBlocks = new HashSet<>(DEFAULT_VISIBLE); save(); }
+    public void resetToDefaults() { visibleBlocks = new HashSet<>(DEFAULT_VISIBLE); chunkRange = 6; save(); }
+    public int getChunkRange() { return chunkRange; }
+    public void setChunkRange(int range) { this.chunkRange = Math.max(1, Math.min(32, range)); save(); }
 
     public void save() {
         try (Writer w = new FileWriter(CONFIG_PATH.toFile())) {
-            GSON.toJson(visibleBlocks, w);
+            JsonObject obj = new JsonObject();
+            obj.add("visibleBlocks", GSON.toJsonTree(visibleBlocks));
+            obj.addProperty("chunkRange", chunkRange);
+            GSON.toJson(obj, w);
         } catch (IOException e) {
-            System.err.println("[XRayMod] Save failed: " + e.getMessage());
+            System.err.println("[KPS+] Save failed: " + e.getMessage());
         }
     }
 
@@ -54,11 +61,17 @@ public class XRayConfig {
         File file = CONFIG_PATH.toFile();
         if (!file.exists()) { cfg.save(); return cfg; }
         try (Reader r = new FileReader(file)) {
-            Type type = new TypeToken<HashSet<String>>() {}.getType();
-            Set<String> loaded = GSON.fromJson(r, type);
-            if (loaded != null) cfg.visibleBlocks = loaded;
+            JsonObject obj = GSON.fromJson(r, JsonObject.class);
+            if (obj.has("visibleBlocks")) {
+                Type type = new TypeToken<HashSet<String>>() {}.getType();
+                Set<String> loaded = GSON.fromJson(obj.get("visibleBlocks"), type);
+                if (loaded != null) cfg.visibleBlocks = loaded;
+            }
+            if (obj.has("chunkRange")) {
+                cfg.chunkRange = obj.get("chunkRange").getAsInt();
+            }
         } catch (IOException e) {
-            System.err.println("[XRayMod] Load failed: " + e.getMessage());
+            System.err.println("[KPS+] Load failed: " + e.getMessage());
         }
         return cfg;
     }
