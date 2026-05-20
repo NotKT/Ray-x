@@ -20,7 +20,7 @@ public class XRayConfigScreen extends Screen {
     private static final int LIST_BOTTOM_MARGIN = 50;
 
     public XRayConfigScreen(Screen parent) {
-        super(Text.literal("XRay Whitelist Config"));
+        super(Text.literal("KPS+ Whitelist Config"));
         this.parent = parent;
     }
 
