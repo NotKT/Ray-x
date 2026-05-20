@@ -17,6 +17,8 @@ public class XRayClient implements ClientModInitializer {
     public static KeyBinding xrayKey;
     public static KeyBinding configKey;
     private static boolean wasActive = false;
+    private static final double FULLBRIGHT_GAMMA = 100.0;
+    private static double originalGamma = -1;
 
     @Override
     public void onInitializeClient() {
@@ -31,12 +33,12 @@ public class XRayClient implements ClientModInitializer {
             "key.xraymod.config", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Z, cat));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            // Update player chunk position every tick
             if (client.player != null) {
                 XRayState.playerChunkX = client.player.getBlockPos().getX() >> 4;
                 XRayState.playerChunkZ = client.player.getBlockPos().getZ() >> 4;
             }
 
+            // XRay toggle
             boolean isActive = xrayKey.isPressed();
             if (isActive != wasActive) {
                 XRayState.active = isActive;
@@ -46,12 +48,29 @@ public class XRayClient implements ClientModInitializer {
                 }
             }
 
+            // Fullbright
+            if (client.options != null) {
+                if (XRayState.config.isFullbright()) {
+                    if (originalGamma < 0) {
+                        originalGamma = client.options.getGamma().getValue();
+                    }
+                    client.options.getGamma().setValue(FULLBRIGHT_GAMMA);
+                } else {
+                    if (originalGamma >= 0) {
+                        client.options.getGamma().setValue(originalGamma);
+                        originalGamma = -1;
+                    }
+                }
+            }
+
+            // Config screen
             while (configKey.wasPressed()) {
                 if (client.currentScreen == null) {
                     client.setScreen(new XRayConfigScreen(null));
                 }
             }
 
+            // Action bar
             if (client.player != null && XRayState.active) {
                 client.player.sendMessage(
                     Text.literal("§bKPS+ §aXRay ACTIVE §7— §eX §7to disable | Range: §f"
