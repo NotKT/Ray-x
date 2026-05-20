@@ -60,10 +60,7 @@ public class XRayConfigScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Dark background
         context.fill(0, 0, width, height, 0xCC000000);
-
-        // Divider lines
         context.fill(0, LIST_TOP - 5, width, LIST_TOP - 4, 0x88FFFFFF);
         context.fill(0, height - LIST_BOTTOM_MARGIN + 5, width, height - LIST_BOTTOM_MARGIN + 6, 0x88FFFFFF);
 
@@ -77,21 +74,17 @@ public class XRayConfigScreen extends Screen {
             String blockId = blocks.get(i + scrollOffset);
             int y = LIST_TOP + i * ROW_HEIGHT;
 
-            // Row background
             if (i % 2 == 0) {
                 context.fill(0, y, width, y + ROW_HEIGHT, 0x22FFFFFF);
             }
 
-            // Block name — use bright yellow so it's definitely visible
             context.fill(5, y + 3, 15, y + 13, 0xFFFFAA00);
             context.drawText(textRenderer, blockId, 18, y + 6, 0xFFFFFF00, true);
 
-            // Red X button on right
             context.fill(width - 35, y + 2, width - 5, y + ROW_HEIGHT - 2, 0xFF992222);
             context.drawText(textRenderer, "X", width - 24, y + 6, 0xFFFFFFFF, true);
         }
 
-        // Draw widgets on top
         super.render(context, mouseX, mouseY, delta);
     }
 
@@ -102,8 +95,7 @@ public class XRayConfigScreen extends Screen {
 
         for (int i = 0; i < visibleRows && (i + scrollOffset) < blocks.size(); i++) {
             int y = LIST_TOP + i * ROW_HEIGHT;
-            if (mouseX >= width - 35 && mouseX <= width - 5
-                && mouseY >= y + 2 && mouseY <= y + ROW_HEIGHT - 2) {
+            if (mouseX >= width - 35 && mouseY >= y && mouseY <= y + ROW_HEIGHT) {
                 XRayState.config.removeBlock(blocks.get(i + scrollOffset));
                 return true;
             }
