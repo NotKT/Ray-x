@@ -6,8 +6,10 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.option.KeyBinding.Category;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public class XRayClient implements ClientModInitializer {
@@ -19,19 +21,13 @@ public class XRayClient implements ClientModInitializer {
     public void onInitializeClient() {
         XRayState.config = XRayConfig.load();
 
+        Category cat = Category.create(Identifier.of("xraymod", "keys"));
+
         xrayKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.xraymod.xray",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_X,
-            KeyBinding.MISC_CATEGORY
-        ));
+            "key.xraymod.xray", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_X, cat));
 
         configKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.xraymod.config",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_Z,
-            KeyBinding.MISC_CATEGORY
-        ));
+            "key.xraymod.config", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Z, cat));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             XRayState.active = xrayKey.isPressed();
