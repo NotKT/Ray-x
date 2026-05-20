@@ -51,12 +51,17 @@ public class XRayConfigScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         if (client == null) return;
 
-        context.drawCenteredTextWithShadow(client.textRenderer,
-            Text.literal("§bXRay §fWhitelist"), width / 2, 10, 0xFFFFFF);
-        context.drawCenteredTextWithShadow(client.textRenderer,
-            Text.literal("§7Hold §eX §7to activate  |  These blocks stay visible"),
+        // Draw dark background
+        context.fill(0, 0, width, height, 0xCC000000);
+
+        // Draw title
+        context.drawCenteredTextWithShadow(textRenderer,
+            Text.literal("XRay Whitelist"), width / 2, 10, 0x00BFFF);
+        context.drawCenteredTextWithShadow(textRenderer,
+            Text.literal("Hold X to activate  |  These blocks stay visible"),
             width / 2, 24, 0xAAAAAA);
 
+        // Draw block list
         List<String> blocks = new ArrayList<>(XRayState.config.getVisibleBlocks());
         blocks.sort(String::compareTo);
         int visibleRows = (height - LIST_TOP - 50) / ROW_HEIGHT;
@@ -66,15 +71,21 @@ public class XRayConfigScreen extends Screen {
         for (int i = 0; i < visibleRows && (i + scrollOffset) < blocks.size(); i++) {
             String blockId = blocks.get(i + scrollOffset);
             int y = LIST_TOP + 20 + i * ROW_HEIGHT;
+
             if (i % 2 == 0)
-                context.fill(width / 2 - 152, y - 1, width / 2 + 152, y + ROW_HEIGHT - 2, 0x22FFFFFF);
-            context.drawTextWithShadow(client.textRenderer,
+                context.fill(width / 2 - 152, y - 1,
+                    width / 2 + 152, y + ROW_HEIGHT - 2, 0x22FFFFFF);
+
+            context.drawTextWithShadow(textRenderer,
                 Text.literal(blockId), width / 2 - 148, y + 4, 0xFFFFFF);
-            context.fill(width / 2 + 110, y, width / 2 + 150, y + ROW_HEIGHT - 2, 0xAACC3333);
-            context.drawCenteredTextWithShadow(client.textRenderer,
+
+            context.fill(width / 2 + 110, y,
+                width / 2 + 150, y + ROW_HEIGHT - 2, 0xAACC3333);
+            context.drawCenteredTextWithShadow(textRenderer,
                 Text.literal("X"), width / 2 + 130, y + 4, 0xFFFFFF);
         }
 
+        // Draw widgets (buttons, text field) on top
         super.render(context, mouseX, mouseY, delta);
     }
 
