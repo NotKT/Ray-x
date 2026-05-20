@@ -17,7 +17,7 @@ public class XRayConfigScreen extends Screen {
     private TextFieldWidget rangeField;
     private int scrollOffset = 0;
     private static final int ROW_HEIGHT = 22;
-    private static final int LIST_TOP = 95;
+    private static final int LIST_TOP = 115;
     private static final int LIST_BOTTOM_MARGIN = 50;
 
     public XRayConfigScreen(Screen parent) {
@@ -47,7 +47,7 @@ public class XRayConfigScreen extends Screen {
             }
         }).dimensions(width / 2 + 55, 9, 55, 20).build());
 
-        // Range preset buttons row
+        // Range preset buttons
         int rangeY = 60;
         int[] presets = {3, 6, 9, 12};
         for (int i = 0; i < presets.length; i++) {
@@ -74,6 +74,14 @@ public class XRayConfigScreen extends Screen {
                 init();
             } catch (NumberFormatException ignored) {}
         }).dimensions(width / 2 + 133, rangeY, 30, 20).build());
+
+        // Fullbright toggle button
+        boolean fb = XRayState.config.isFullbright();
+        addDrawableChild(ButtonWidget.builder(
+            Text.literal("Fullbright: " + (fb ? "§aON" : "§cOFF")), btn -> {
+                XRayState.config.setFullbright(!XRayState.config.isFullbright());
+                init();
+            }).dimensions(width / 2 - 60, 88, 120, 20).build());
 
         // Reset defaults
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset Defaults"), btn -> {
@@ -115,19 +123,15 @@ public class XRayConfigScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, width, height, 0xCC000000);
 
-        // Dividers
         context.fill(0, LIST_TOP - 5, width, LIST_TOP - 4, 0x88FFFFFF);
         context.fill(0, height - LIST_BOTTOM_MARGIN + 5, width,
             height - LIST_BOTTOM_MARGIN + 6, 0x88FFFFFF);
 
-        // Labels
-        context.drawText(textRenderer,
-            "Add Block:", 10, 14, 0xFF00BFFF, true);
+        context.drawText(textRenderer, "Add Block:", 10, 14, 0xFF00BFFF, true);
         context.drawText(textRenderer,
             "XRay Range: (current: " + XRayState.config.getChunkRange() + " chunks)",
             10, 46, 0xFFFFAA00, true);
 
-        // Block list
         List<String> blocks = getSortedBlocks();
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
         int visibleRows = listHeight / ROW_HEIGHT;
