@@ -4,10 +4,10 @@ import com.xraymod.client.XRayState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.EntryListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.narration.NarrationMessageBuilder;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -105,12 +105,12 @@ public class XRayConfigScreen extends Screen {
             @Override
             public void render(DrawContext context, int index, int y, int x,
                                int entryWidth, int entryHeight,
-                               int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                               int mouseX, int mouseY, boolean hovered, float tickProgress) {
                 context.drawTextWithShadow(textRenderer,
                     Text.literal(blockId), x + 4, y + 4, 0xFFFFFF);
                 removeBtn.setX(x + entryWidth - 22);
                 removeBtn.setY(y + 1);
-                removeBtn.render(context, mouseX, mouseY, tickDelta);
+                removeBtn.render(context, mouseX, mouseY, tickProgress);
             }
 
             @Override
