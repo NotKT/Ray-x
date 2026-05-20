@@ -3,7 +3,7 @@
   "id": "xraymod",
   "version": "${version}",
   "name": "KPS+",
-  "description": "Hold X to make blocks invisible. Z to configure whitelist.",
+  "description": "FPS Boosting and Utility Mod Created By KT",
   "authors": ["You"],
   "license": "MIT",
   "environment": "client",
