@@ -49,19 +49,15 @@ public class XRayConfigScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        if (client == null) return;
+        // Dark background
+        context.fill(0, 0, width, height, 0xDD000000);
 
-        // Draw dark background
-        context.fill(0, 0, width, height, 0xCC000000);
+        // Title using drawText (not drawTextWithShadow)
+        context.drawText(textRenderer,
+            "XRay Whitelist", width / 2 - 40, 10, 0x00BFFF, true);
+        context.drawText(textRenderer,
+            "Hold X to activate", width / 2 - 55, 24, 0xAAAAAA, true);
 
-        // Draw title
-        context.drawCenteredTextWithShadow(textRenderer,
-            Text.literal("XRay Whitelist"), width / 2, 10, 0x00BFFF);
-        context.drawCenteredTextWithShadow(textRenderer,
-            Text.literal("Hold X to activate  |  These blocks stay visible"),
-            width / 2, 24, 0xAAAAAA);
-
-        // Draw block list
         List<String> blocks = new ArrayList<>(XRayState.config.getVisibleBlocks());
         blocks.sort(String::compareTo);
         int visibleRows = (height - LIST_TOP - 50) / ROW_HEIGHT;
@@ -73,19 +69,19 @@ public class XRayConfigScreen extends Screen {
             int y = LIST_TOP + 20 + i * ROW_HEIGHT;
 
             if (i % 2 == 0)
-                context.fill(width / 2 - 152, y - 1,
-                    width / 2 + 152, y + ROW_HEIGHT - 2, 0x22FFFFFF);
+                context.fill(0, y - 1, width, y + ROW_HEIGHT - 2, 0x33FFFFFF);
 
-            context.drawTextWithShadow(textRenderer,
-                Text.literal(blockId), width / 2 - 148, y + 4, 0xFFFFFF);
+            // Draw text using drawText instead of drawTextWithShadow
+            context.drawText(textRenderer,
+                blockId, 10, y + 4, 0xFFFFFF, true);
 
-            context.fill(width / 2 + 110, y,
-                width / 2 + 150, y + ROW_HEIGHT - 2, 0xAACC3333);
-            context.drawCenteredTextWithShadow(textRenderer,
-                Text.literal("X"), width / 2 + 130, y + 4, 0xFFFFFF);
+            // Red X button
+            context.fill(width - 50, y, width - 10, y + ROW_HEIGHT - 2, 0xAACC3333);
+            context.drawText(textRenderer,
+                "X", width - 34, y + 4, 0xFFFFFF, true);
         }
 
-        // Draw widgets (buttons, text field) on top
+        // Render widgets on top
         super.render(context, mouseX, mouseY, delta);
     }
 
