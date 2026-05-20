@@ -5,6 +5,7 @@ import com.xraymod.client.gui.XRayConfigScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.option.KeyBinding.Category;
 import net.minecraft.client.util.InputUtil;
@@ -16,6 +17,7 @@ public class XRayClient implements ClientModInitializer {
 
     public static KeyBinding xrayKey;
     public static KeyBinding configKey;
+    private static boolean wasActive = false;
 
     @Override
     public void onInitializeClient() {
@@ -30,16 +32,33 @@ public class XRayClient implements ClientModInitializer {
             "key.xraymod.config", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Z, cat));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            XRayState.active = xrayKey.isPressed();
+            boolean isActive = xrayKey.isPressed();
+
+            // Detect state change — reload chunks when X is pressed or released
+            if (isActive != wasActive) {
+                XRayState.active = isActive;
+                wasActive = isActive;
+                reloadChunks(client);
+            }
+
+            // Open config screen
             while (configKey.wasPressed()) {
                 if (client.currentScreen == null) {
                     client.setScreen(new XRayConfigScreen(null));
                 }
             }
+
+            // Action bar message while active
             if (client.player != null && XRayState.active) {
                 client.player.sendMessage(
                     Text.literal("§bXRay §aACTIVE §7— release §eX §7to disable"), true);
             }
         });
+    }
+
+    private void reloadChunks(MinecraftClient client) {
+        if (client.worldRenderer != null) {
+            client.worldRenderer.reload();
+        }
     }
 }
