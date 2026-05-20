@@ -26,6 +26,8 @@ public class XRayConfigScreen extends Screen {
 
     @Override
     protected void init() {
+        clearChildren();
+
         addField = new TextFieldWidget(
             textRenderer, width / 2 - 150, 10, 240, 18,
             Text.literal("Block ID"));
@@ -38,18 +40,39 @@ public class XRayConfigScreen extends Screen {
             if (!id.isEmpty()) {
                 XRayState.config.addBlock(id);
                 addField.setText("");
+                rebuildButtons();
             }
         }).dimensions(width / 2 + 95, 9, 55, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset Defaults"), btn -> {
             XRayState.config.resetToDefaults();
             scrollOffset = 0;
+            rebuildButtons();
         }).dimensions(width / 2 - 60, height - 30, 120, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Done"), btn -> {
             assert client != null;
             client.setScreen(parent);
         }).dimensions(width / 2 + 65, height - 30, 60, 20).build());
+
+        rebuildButtons();
+    }
+
+    private void rebuildButtons() {
+        // Remove old remove buttons by reinitializing
+        // Keep track via re-init
+        List<String> blocks = getSortedBlocks();
+        int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
+        int visibleRows = listHeight / ROW_HEIGHT;
+
+        for (int i = 0; i < visibleRows && (i + scrollOffset) < blocks.size(); i++) {
+            final String blockId = blocks.get(i + scrollOffset);
+            int y = LIST_TOP + i * ROW_HEIGHT;
+            addDrawableChild(ButtonWidget.builder(Text.literal("X"), btn -> {
+                XRayState.config.removeBlock(blockId);
+                rebuildButtons();
+            }).dimensions(width - 35, y + 2, 28, 18).build());
+        }
     }
 
     private List<String> getSortedBlocks() {
@@ -62,7 +85,8 @@ public class XRayConfigScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, width, height, 0xCC000000);
         context.fill(0, LIST_TOP - 5, width, LIST_TOP - 4, 0x88FFFFFF);
-        context.fill(0, height - LIST_BOTTOM_MARGIN + 5, width, height - LIST_BOTTOM_MARGIN + 6, 0x88FFFFFF);
+        context.fill(0, height - LIST_BOTTOM_MARGIN + 5, width,
+            height - LIST_BOTTOM_MARGIN + 6, 0x88FFFFFF);
 
         List<String> blocks = getSortedBlocks();
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
@@ -80,27 +104,9 @@ public class XRayConfigScreen extends Screen {
 
             context.fill(5, y + 3, 15, y + 13, 0xFFFFAA00);
             context.drawText(textRenderer, blockId, 18, y + 6, 0xFFFFFF00, true);
-
-            context.fill(width - 35, y + 2, width - 5, y + ROW_HEIGHT - 2, 0xFF992222);
-            context.drawText(textRenderer, "X", width - 24, y + 6, 0xFFFFFFFF, true);
         }
 
         super.render(context, mouseX, mouseY, delta);
-    }
-
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        List<String> blocks = getSortedBlocks();
-        int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
-        int visibleRows = listHeight / ROW_HEIGHT;
-
-        for (int i = 0; i < visibleRows && (i + scrollOffset) < blocks.size(); i++) {
-            int y = LIST_TOP + i * ROW_HEIGHT;
-            if (mouseX >= width - 35 && mouseY >= y && mouseY <= y + ROW_HEIGHT) {
-                XRayState.config.removeBlock(blocks.get(i + scrollOffset));
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -110,7 +116,9 @@ public class XRayConfigScreen extends Screen {
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
         int visibleRows = listHeight / ROW_HEIGHT;
         int maxScroll = Math.max(0, blocks.size() - visibleRows);
-        scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset - (int) verticalAmount));
+        scrollOffset = Math.max(0, Math.min(maxScroll,
+            scrollOffset - (int) verticalAmount));
+        rebuildButtons();
         return true;
     }
 
