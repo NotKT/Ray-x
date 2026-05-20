@@ -49,7 +49,6 @@ public class XRayConfigScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(textRenderer,
             Text.literal("§bXRay §fWhitelist"), width / 2, 10, 0xFFFFFF);
         context.drawCenteredTextWithShadow(textRenderer,
