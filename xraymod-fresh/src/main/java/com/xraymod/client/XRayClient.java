@@ -17,7 +17,7 @@ public class XRayClient implements ClientModInitializer {
     public static KeyBinding xrayKey;
     public static KeyBinding configKey;
     private static boolean wasActive = false;
-    private static final double FULLBRIGHT_GAMMA = 100.0;
+    private static final double FULLBRIGHT_GAMMA = 1.0;
     private static double originalGamma = -1;
 
     @Override
@@ -54,7 +54,7 @@ public class XRayClient implements ClientModInitializer {
                     if (originalGamma < 0) {
                         originalGamma = client.options.getGamma().getValue();
                     }
-                    client.options.getGamma().setValue(100.0);
+                    client.options.getGamma().setValue(1.0);
                     client.options.write();
                 } else {
                     if (originalGamma >= 0) {
