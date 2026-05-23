@@ -3,7 +3,8 @@
   "package": "com.xraymod.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "BlockRenderMixin"
+    "BlockRenderMixin",
+    "EntityGlowMixin"
   ],
   "injectors": {
     "defaultRequire": 1
