@@ -8,6 +8,8 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.option.KeyBinding.Category;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
@@ -46,21 +48,16 @@ public class XRayClient implements ClientModInitializer {
                 }
             }
 
-           // Fullbright using night vision effect
+            // Fullbright via night vision
             if (client.player != null) {
-                if (XRayState.config.isFullbright()) {
-                    client.player.addStatusEffect(
-                        new net.minecraft.entity.effect.StatusEffectInstance(
-                            net.minecraft.entity.effect.StatusEffects.NIGHT_VISION,
-                            Integer.MAX_VALUE, 0, false, false, false
-                        )
-                    );
-                } else {
-                    client.player.removeStatusEffect(
-                        net.minecraft.registry.entry.RegistryEntry.of(
-                            net.minecraft.entity.effect.StatusEffects.NIGHT_VISION
-                        )
-                    );
+                boolean hasnv = client.player.hasStatusEffect(StatusEffects.NIGHT_VISION);
+                if (XRayState.config.isFullbright() && !hasnv) {
+                    client.player.addStatusEffect(new StatusEffectInstance(
+                        StatusEffects.NIGHT_VISION,
+                        Integer.MAX_VALUE, 0, false, false, false
+                    ));
+                } else if (!XRayState.config.isFullbright() && hasnv) {
+                    client.player.removeStatusEffect(StatusEffects.NIGHT_VISION);
                 }
             }
 
