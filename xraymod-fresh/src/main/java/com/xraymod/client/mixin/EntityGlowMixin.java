@@ -19,8 +19,16 @@ public abstract class EntityGlowMixin {
         Entity self = (Entity) (Object) this;
         MinecraftClient client = MinecraftClient.getInstance();
 
-        // Don't glow the local player
-        if (client.player != null && self == client.player) return;
+        if (client.player == null) return;
+        if (self == client.player) return;
+
+        // Use separate entity glow range
+        int rangeBlocks = XRayState.config != null
+            ? XRayState.config.getEntityGlowRange() * 16
+            : 96;
+
+        double dist = client.player.squaredDistanceTo(self);
+        if (dist > rangeBlocks * rangeBlocks) return;
 
         String entityId = Registries.ENTITY_TYPE.getId(self.getType()).toString();
         if (XRayState.config != null && XRayState.config.isEntityExcluded(entityId)) return;
