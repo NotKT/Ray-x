@@ -110,7 +110,7 @@ public class XRayConfigScreen extends Screen {
             XRayState.config.resetToDefaults();
             blockScrollOffset = 0;
             init();
-        }).dimensions(width - 175, height - 28, 120, 20).build());
+        }).dimensions(width / 2 - 60, height - 28, 120, 20).build());
 
         List<String> blocks = getSortedBlocks();
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
@@ -174,7 +174,7 @@ public class XRayConfigScreen extends Screen {
             XRayState.config.resetToDefaults();
             entityScrollOffset = 0;
             init();
-        }).dimensions(width - 175, height - 28, 120, 20).build());
+        }).dimensions(width / 2 - 60, height - 28, 120, 20).build());
 
         List<String> entities = getSortedGlowEntities();
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
