@@ -19,7 +19,7 @@ public class XRayConfig {
         FabricLoader.getInstance().getConfigDir().resolve("xraymod.json");
 
     private Set<String> visibleBlocks = new HashSet<>(DEFAULT_VISIBLE_BLOCKS);
-    private Set<String> excludedEntities = new HashSet<>();
+    private Set<String> glowEntities = new HashSet<>();
     private int chunkRange = 6;
     private int entityGlowRange = 6;
     private boolean fullbright = false;
@@ -45,10 +45,10 @@ public class XRayConfig {
     public void addBlock(String blockId) { visibleBlocks.add(blockId); save(); }
     public void removeBlock(String blockId) { visibleBlocks.remove(blockId); save(); }
 
-    public Set<String> getExcludedEntities() { return excludedEntities; }
-    public boolean isEntityExcluded(String entityId) { return excludedEntities.contains(entityId); }
-    public void addExcludedEntity(String entityId) { excludedEntities.add(entityId); save(); }
-    public void removeExcludedEntity(String entityId) { excludedEntities.remove(entityId); save(); }
+    public Set<String> getGlowEntities() { return glowEntities; }
+    public boolean shouldGlow(String entityId) { return glowEntities.contains(entityId); }
+    public void addGlowEntity(String entityId) { glowEntities.add(entityId); save(); }
+    public void removeGlowEntity(String entityId) { glowEntities.remove(entityId); save(); }
 
     public int getChunkRange() { return chunkRange; }
     public void setChunkRange(int range) { this.chunkRange = Math.max(1, Math.min(32, range)); save(); }
@@ -61,7 +61,7 @@ public class XRayConfig {
 
     public void resetToDefaults() {
         visibleBlocks = new HashSet<>(DEFAULT_VISIBLE_BLOCKS);
-        excludedEntities = new HashSet<>();
+        glowEntities = new HashSet<>();
         chunkRange = 6;
         entityGlowRange = 6;
         fullbright = false;
@@ -72,7 +72,7 @@ public class XRayConfig {
         try (Writer w = new FileWriter(CONFIG_PATH.toFile())) {
             JsonObject obj = new JsonObject();
             obj.add("visibleBlocks", GSON.toJsonTree(visibleBlocks));
-            obj.add("excludedEntities", GSON.toJsonTree(excludedEntities));
+            obj.add("glowEntities", GSON.toJsonTree(glowEntities));
             obj.addProperty("chunkRange", chunkRange);
             obj.addProperty("entityGlowRange", entityGlowRange);
             obj.addProperty("fullbright", fullbright);
@@ -93,10 +93,10 @@ public class XRayConfig {
                 Set<String> loaded = GSON.fromJson(obj.get("visibleBlocks"), type);
                 if (loaded != null) cfg.visibleBlocks = loaded;
             }
-            if (obj.has("excludedEntities")) {
+            if (obj.has("glowEntities")) {
                 Type type = new TypeToken<HashSet<String>>() {}.getType();
-                Set<String> loaded = GSON.fromJson(obj.get("excludedEntities"), type);
-                if (loaded != null) cfg.excludedEntities = loaded;
+                Set<String> loaded = GSON.fromJson(obj.get("glowEntities"), type);
+                if (loaded != null) cfg.glowEntities = loaded;
             }
             if (obj.has("chunkRange")) cfg.chunkRange = obj.get("chunkRange").getAsInt();
             if (obj.has("entityGlowRange")) cfg.entityGlowRange = obj.get("entityGlowRange").getAsInt();
