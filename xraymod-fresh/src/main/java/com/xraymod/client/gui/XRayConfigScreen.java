@@ -134,7 +134,6 @@ public class XRayConfigScreen extends Screen {
     }
 
     private void initEntitiesTab() {
-        // Add entity field
         addEntityField = new TextFieldWidget(
             textRenderer, width / 2 - 150, 10, 200, 18,
             Text.literal("Entity ID"));
@@ -150,6 +149,32 @@ public class XRayConfigScreen extends Screen {
                 init();
             }
         }).dimensions(width / 2 + 55, 9, 65, 20).build());
+
+        // Entity glow range presets
+        int rangeY = 60;
+        int[] presets = {3, 6, 9, 12};
+        for (int i = 0; i < presets.length; i++) {
+            final int range = presets[i];
+            addDrawableChild(ButtonWidget.builder(Text.literal(range + "c"), btn -> {
+                XRayState.config.setEntityGlowRange(range);
+                init();
+            }).dimensions(width / 2 - 90 + i * 45, rangeY, 40, 20).build());
+        }
+
+        TextFieldWidget entityRangeField = new TextFieldWidget(
+            textRenderer, width / 2 + 95, rangeY, 35, 18,
+            Text.literal("Range"));
+        entityRangeField.setPlaceholder(Text.literal("6"));
+        entityRangeField.setText(String.valueOf(XRayState.config.getEntityGlowRange()));
+        addDrawableChild(entityRangeField);
+
+        addDrawableChild(ButtonWidget.builder(Text.literal("Set"), btn -> {
+            try {
+                int val = Integer.parseInt(entityRangeField.getText().trim());
+                XRayState.config.setEntityGlowRange(val);
+                init();
+            } catch (NumberFormatException ignored) {}
+        }).dimensions(width / 2 + 133, rangeY, 30, 20).build());
 
         // Entity exclusion list X buttons
         List<String> entities = getSortedEntities();
@@ -167,7 +192,6 @@ public class XRayConfigScreen extends Screen {
             }).dimensions(width - 35, y + 2, 28, 18).build());
         }
     }
-
     private List<String> getSortedBlocks() {
         List<String> blocks = new ArrayList<>(XRayState.config.getVisibleBlocks());
         blocks.sort(String::compareTo);
@@ -213,7 +237,8 @@ public class XRayConfigScreen extends Screen {
                 "Excluded Entities (won't glow):",
                 10, LIST_TOP - 18, 0xFF00BFFF, true);
             context.drawText(textRenderer,
-                "Hold §eC §fto activate entity glow",
+                "Hold §eC §fto activate | Range: §f"
+                + XRayState.config.getEntityGlowRange() + " chunks",
                 10, 36, 0xFFAAAAAA, true);
 
             List<String> entities = getSortedEntities();
