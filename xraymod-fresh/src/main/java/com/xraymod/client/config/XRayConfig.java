@@ -18,11 +18,12 @@ public class XRayConfig {
     private static final Path CONFIG_PATH =
         FabricLoader.getInstance().getConfigDir().resolve("xraymod.json");
 
-    private Set<String> visibleBlocks = new HashSet<>(DEFAULT_VISIBLE);
+    private Set<String> visibleBlocks = new HashSet<>(DEFAULT_VISIBLE_BLOCKS);
+    private Set<String> excludedEntities = new HashSet<>();
     private int chunkRange = 6;
     private boolean fullbright = false;
 
-    public static final Set<String> DEFAULT_VISIBLE = Set.of(
+    public static final Set<String> DEFAULT_VISIBLE_BLOCKS = Set.of(
         "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore",
         "minecraft:iron_ore", "minecraft:deepslate_iron_ore",
         "minecraft:gold_ore", "minecraft:deepslate_gold_ore",
@@ -38,17 +39,29 @@ public class XRayConfig {
         "minecraft:water", "minecraft:bedrock"
     );
 
+    // Block whitelist
     public Set<String> getVisibleBlocks() { return visibleBlocks; }
     public boolean isVisible(String blockId) { return visibleBlocks.contains(blockId); }
     public void addBlock(String blockId) { visibleBlocks.add(blockId); save(); }
     public void removeBlock(String blockId) { visibleBlocks.remove(blockId); save(); }
+
+    // Entity exclusion list
+    public Set<String> getExcludedEntities() { return excludedEntities; }
+    public boolean isEntityExcluded(String entityId) { return excludedEntities.contains(entityId); }
+    public void addExcludedEntity(String entityId) { excludedEntities.add(entityId); save(); }
+    public void removeExcludedEntity(String entityId) { excludedEntities.remove(entityId); save(); }
+
+    // Chunk range
     public int getChunkRange() { return chunkRange; }
     public void setChunkRange(int range) { this.chunkRange = Math.max(1, Math.min(32, range)); save(); }
+
+    // Fullbright
     public boolean isFullbright() { return fullbright; }
     public void setFullbright(boolean fullbright) { this.fullbright = fullbright; save(); }
 
     public void resetToDefaults() {
-        visibleBlocks = new HashSet<>(DEFAULT_VISIBLE);
+        visibleBlocks = new HashSet<>(DEFAULT_VISIBLE_BLOCKS);
+        excludedEntities = new HashSet<>();
         chunkRange = 6;
         fullbright = false;
         save();
@@ -58,6 +71,7 @@ public class XRayConfig {
         try (Writer w = new FileWriter(CONFIG_PATH.toFile())) {
             JsonObject obj = new JsonObject();
             obj.add("visibleBlocks", GSON.toJsonTree(visibleBlocks));
+            obj.add("excludedEntities", GSON.toJsonTree(excludedEntities));
             obj.addProperty("chunkRange", chunkRange);
             obj.addProperty("fullbright", fullbright);
             GSON.toJson(obj, w);
@@ -77,12 +91,13 @@ public class XRayConfig {
                 Set<String> loaded = GSON.fromJson(obj.get("visibleBlocks"), type);
                 if (loaded != null) cfg.visibleBlocks = loaded;
             }
-            if (obj.has("chunkRange")) {
-                cfg.chunkRange = obj.get("chunkRange").getAsInt();
+            if (obj.has("excludedEntities")) {
+                Type type = new TypeToken<HashSet<String>>() {}.getType();
+                Set<String> loaded = GSON.fromJson(obj.get("excludedEntities"), type);
+                if (loaded != null) cfg.excludedEntities = loaded;
             }
-            if (obj.has("fullbright")) {
-                cfg.fullbright = obj.get("fullbright").getAsBoolean();
-            }
+            if (obj.has("chunkRange")) cfg.chunkRange = obj.get("chunkRange").getAsInt();
+            if (obj.has("fullbright")) cfg.fullbright = obj.get("fullbright").getAsBoolean();
         } catch (IOException e) {
             System.err.println("[KPS+] Load failed: " + e.getMessage());
         }
