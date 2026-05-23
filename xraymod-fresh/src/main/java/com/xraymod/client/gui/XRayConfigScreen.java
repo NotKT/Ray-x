@@ -43,18 +43,18 @@ public class XRayConfigScreen extends Screen {
             Text.literal(showingEntities ? "§7Blocks" : "§aBlocks"), btn -> {
                 showingEntities = false;
                 init();
-            }).dimensions(width / 2 - 65, height - 30, 60, 20).build());
+            }).dimensions(10, height - 30, 80, 20).build());
 
         addDrawableChild(ButtonWidget.builder(
             Text.literal(showingEntities ? "§aEntities" : "§7Entities"), btn -> {
                 showingEntities = true;
                 init();
-            }).dimensions(width / 2 - 1, height - 30, 65, 20).build());
+            }).dimensions(95, height - 30, 80, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Done"), btn -> {
             assert client != null;
             client.setScreen(parent);
-        }).dimensions(width / 2 + 68, height - 30, 50, 20).build());
+        }).dimensions(width - 90, height - 30, 80, 20).build());
     }
 
     private void initBlocksTab() {
@@ -114,7 +114,7 @@ public class XRayConfigScreen extends Screen {
             XRayState.config.resetToDefaults();
             blockScrollOffset = 0;
             init();
-        }).dimensions(width / 2 - 130, height - 30, 120, 20).build());
+        }).dimensions(width - 175, height - 30, 120, 20).build());
 
         // Block list X buttons
         List<String> blocks = getSortedBlocks();
