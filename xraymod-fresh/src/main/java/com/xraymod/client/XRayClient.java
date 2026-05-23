@@ -62,21 +62,6 @@ public class XRayClient implements ClientModInitializer {
                 wasEntityGlowActive = isEntityGlowActive;
             }
 
-            // Apply/remove glow on entities
-            if (client.world != null && client.player != null) {
-                for (Entity entity : client.world.getEntities()) {
-                    if (entity == client.player) continue;
-                    String entityId = Registries.ENTITY_TYPE
-                        .getId(entity.getType()).toString();
-                    boolean excluded = XRayState.config.isEntityExcluded(entityId);
-
-                    if (XRayState.entityGlowActive && !excluded) {
-                        entity.setGlowing(true);
-                    } else {
-                        entity.setGlowing(false);
-                    }
-                }
-            }
 
             // Fullbright via night vision
             if (client.player != null) {
