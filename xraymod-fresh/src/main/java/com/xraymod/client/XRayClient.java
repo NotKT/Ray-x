@@ -17,8 +17,6 @@ public class XRayClient implements ClientModInitializer {
     public static KeyBinding xrayKey;
     public static KeyBinding configKey;
     private static boolean wasActive = false;
-    private static final double FULLBRIGHT_GAMMA = 1.0;
-    private static double originalGamma = -1;
 
     @Override
     public void onInitializeClient() {
@@ -48,20 +46,21 @@ public class XRayClient implements ClientModInitializer {
                 }
             }
 
-            // Fullbright
-            if (client.options != null) {
+           // Fullbright using night vision effect
+            if (client.player != null) {
                 if (XRayState.config.isFullbright()) {
-                    if (originalGamma < 0) {
-                        originalGamma = client.options.getGamma().getValue();
-                    }
-                    client.options.getGamma().setValue(1.0);
-                    client.options.write();
+                    client.player.addStatusEffect(
+                        new net.minecraft.entity.effect.StatusEffectInstance(
+                            net.minecraft.entity.effect.StatusEffects.NIGHT_VISION,
+                            Integer.MAX_VALUE, 0, false, false, false
+                        )
+                    );
                 } else {
-                    if (originalGamma >= 0) {
-                        client.options.getGamma().setValue(originalGamma);
-                        client.options.write();
-                        originalGamma = -1;
-                    }
+                    client.player.removeStatusEffect(
+                        net.minecraft.registry.entry.RegistryEntry.of(
+                            net.minecraft.entity.effect.StatusEffects.NIGHT_VISION
+                        )
+                    );
                 }
             }
 
