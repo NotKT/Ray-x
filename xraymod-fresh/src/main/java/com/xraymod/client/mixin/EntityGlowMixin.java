@@ -22,16 +22,16 @@ public abstract class EntityGlowMixin {
         if (client.player == null) return;
         if (self == client.player) return;
 
-        // Use separate entity glow range
+        // Range check
         int rangeBlocks = XRayState.config != null
             ? XRayState.config.getEntityGlowRange() * 16
             : 96;
-
         double dist = client.player.squaredDistanceTo(self);
         if (dist > rangeBlocks * rangeBlocks) return;
 
+        // Whitelist check — only glow if entity is in the glow list
         String entityId = Registries.ENTITY_TYPE.getId(self.getType()).toString();
-        if (XRayState.config != null && XRayState.config.isEntityExcluded(entityId)) return;
+        if (XRayState.config == null || !XRayState.config.shouldGlow(entityId)) return;
 
         cir.setReturnValue(true);
     }
