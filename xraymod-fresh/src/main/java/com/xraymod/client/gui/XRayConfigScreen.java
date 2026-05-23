@@ -21,7 +21,7 @@ public class XRayConfigScreen extends Screen {
     private boolean showingEntities = false;
     private static final int ROW_HEIGHT = 22;
     private static final int LIST_TOP = 115;
-    private static final int LIST_BOTTOM_MARGIN = 50;
+    private static final int LIST_BOTTOM_MARGIN = 55;
 
     public XRayConfigScreen(Screen parent) {
         super(Text.literal("KPS+ Config"));
@@ -38,27 +38,26 @@ public class XRayConfigScreen extends Screen {
             initEntitiesTab();
         }
 
-        // Tab switcher buttons
+        // Bottom buttons — evenly spaced, no overlap
         addDrawableChild(ButtonWidget.builder(
             Text.literal(showingEntities ? "§7Blocks" : "§aBlocks"), btn -> {
                 showingEntities = false;
                 init();
-            }).dimensions(10, height - 30, 80, 20).build());
+            }).dimensions(10, height - 28, 80, 20).build());
 
         addDrawableChild(ButtonWidget.builder(
             Text.literal(showingEntities ? "§aEntities" : "§7Entities"), btn -> {
                 showingEntities = true;
                 init();
-            }).dimensions(95, height - 30, 80, 20).build());
+            }).dimensions(95, height - 28, 80, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Done"), btn -> {
             assert client != null;
             client.setScreen(parent);
-        }).dimensions(width - 90, height - 30, 80, 20).build());
+        }).dimensions(width - 90, height - 28, 80, 20).build());
     }
 
     private void initBlocksTab() {
-        // Add block field
         addBlockField = new TextFieldWidget(
             textRenderer, width / 2 - 150, 10, 200, 18,
             Text.literal("Block ID"));
@@ -75,7 +74,6 @@ public class XRayConfigScreen extends Screen {
             }
         }).dimensions(width / 2 + 55, 9, 55, 20).build());
 
-        // Range preset buttons
         int rangeY = 60;
         int[] presets = {3, 6, 9, 12};
         for (int i = 0; i < presets.length; i++) {
@@ -101,7 +99,6 @@ public class XRayConfigScreen extends Screen {
             } catch (NumberFormatException ignored) {}
         }).dimensions(width / 2 + 133, rangeY, 30, 20).build());
 
-        // Fullbright toggle
         boolean fb = XRayState.config.isFullbright();
         addDrawableChild(ButtonWidget.builder(
             Text.literal("Fullbright: " + (fb ? "§aON" : "§cOFF")), btn -> {
@@ -109,14 +106,12 @@ public class XRayConfigScreen extends Screen {
                 init();
             }).dimensions(width / 2 - 60, 88, 120, 20).build());
 
-        // Reset defaults
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset Defaults"), btn -> {
             XRayState.config.resetToDefaults();
             blockScrollOffset = 0;
             init();
-        }).dimensions(width - 175, height - 30, 120, 20).build());
+        }).dimensions(width - 175, height - 28, 120, 20).build());
 
-        // Block list X buttons
         List<String> blocks = getSortedBlocks();
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
         int visibleRows = listHeight / ROW_HEIGHT;
@@ -141,16 +136,15 @@ public class XRayConfigScreen extends Screen {
         addDrawableChild(addEntityField);
         setInitialFocus(addEntityField);
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Exclude"), btn -> {
+        addDrawableChild(ButtonWidget.builder(Text.literal("Add Glow"), btn -> {
             String id = addEntityField.getText().trim().toLowerCase();
             if (!id.isEmpty()) {
-                XRayState.config.addExcludedEntity(id);
+                XRayState.config.addGlowEntity(id);
                 addEntityField.setText("");
                 init();
             }
-        }).dimensions(width / 2 + 55, 9, 65, 20).build());
+        }).dimensions(width / 2 + 55, 9, 70, 20).build());
 
-        // Entity glow range presets
         int rangeY = 60;
         int[] presets = {3, 6, 9, 12};
         for (int i = 0; i < presets.length; i++) {
@@ -176,8 +170,13 @@ public class XRayConfigScreen extends Screen {
             } catch (NumberFormatException ignored) {}
         }).dimensions(width / 2 + 133, rangeY, 30, 20).build());
 
-        // Entity exclusion list X buttons
-        List<String> entities = getSortedEntities();
+        addDrawableChild(ButtonWidget.builder(Text.literal("Reset Defaults"), btn -> {
+            XRayState.config.resetToDefaults();
+            entityScrollOffset = 0;
+            init();
+        }).dimensions(width - 175, height - 28, 120, 20).build());
+
+        List<String> entities = getSortedGlowEntities();
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
         int visibleRows = listHeight / ROW_HEIGHT;
         int maxScroll = Math.max(0, entities.size() - visibleRows);
@@ -187,19 +186,20 @@ public class XRayConfigScreen extends Screen {
             final String entityId = entities.get(i + entityScrollOffset);
             int y = LIST_TOP + i * ROW_HEIGHT;
             addDrawableChild(ButtonWidget.builder(Text.literal("X"), btn -> {
-                XRayState.config.removeExcludedEntity(entityId);
+                XRayState.config.removeGlowEntity(entityId);
                 init();
             }).dimensions(width - 35, y + 2, 28, 18).build());
         }
     }
+
     private List<String> getSortedBlocks() {
         List<String> blocks = new ArrayList<>(XRayState.config.getVisibleBlocks());
         blocks.sort(String::compareTo);
         return blocks;
     }
 
-    private List<String> getSortedEntities() {
-        List<String> entities = new ArrayList<>(XRayState.config.getExcludedEntities());
+    private List<String> getSortedGlowEntities() {
+        List<String> entities = new ArrayList<>(XRayState.config.getGlowEntities());
         entities.sort(String::compareTo);
         return entities;
     }
@@ -231,17 +231,19 @@ public class XRayConfigScreen extends Screen {
                 context.drawText(textRenderer, blockId, 18, y + 6, 0xFFFFFF00, true);
             }
         } else {
-            context.drawText(textRenderer, "Add Entity to exclude from glow:",
-                10, 14, 0xFF00BFFF, true);
             context.drawText(textRenderer,
-                "Excluded Entities (won't glow):",
+                "Add Entity to glow:", 10, 14, 0xFF00BFFF, true);
+            context.drawText(textRenderer,
+                "Glow Range: (current: " + XRayState.config.getEntityGlowRange() + " chunks)",
+                10, 46, 0xFFFFAA00, true);
+            context.drawText(textRenderer,
+                "Glow List (these entities will glow):",
                 10, LIST_TOP - 18, 0xFF00BFFF, true);
             context.drawText(textRenderer,
-                "Hold §eC §fto activate | Range: §f"
-                + XRayState.config.getEntityGlowRange() + " chunks",
+                "Hold §eC §fto activate",
                 10, 36, 0xFFAAAAAA, true);
 
-            List<String> entities = getSortedEntities();
+            List<String> entities = getSortedGlowEntities();
             int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
             int visibleRows = listHeight / ROW_HEIGHT;
             for (int i = 0; i < visibleRows && (i + entityScrollOffset) < entities.size(); i++) {
@@ -254,7 +256,7 @@ public class XRayConfigScreen extends Screen {
 
             if (entities.isEmpty()) {
                 context.drawText(textRenderer,
-                    "No exclusions — all entities will glow",
+                    "No entities added — nothing will glow",
                     10, LIST_TOP + 10, 0xFF888888, true);
             }
         }
@@ -273,7 +275,7 @@ public class XRayConfigScreen extends Screen {
             blockScrollOffset = Math.max(0, Math.min(maxScroll,
                 blockScrollOffset - (int) verticalAmount));
         } else {
-            List<String> entities = getSortedEntities();
+            List<String> entities = getSortedGlowEntities();
             int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
             int visibleRows = listHeight / ROW_HEIGHT;
             int maxScroll = Math.max(0, entities.size() - visibleRows);
