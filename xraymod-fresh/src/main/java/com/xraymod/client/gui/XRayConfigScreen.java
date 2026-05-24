@@ -1276,22 +1276,6 @@ public class XRayConfigScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
 
-        // Draw suggestions on top of everything
-        if (!showingEntities && !suggestions.isEmpty() && addBlockField != null) {
-            int sx = width / 2 - 150;
-            int sy = 30;
-            int sw = 200;
-            for (int i = 0; i < suggestions.size(); i++) {
-                String suggestion = suggestions.get(i);
-                int ry = sy + i * SUGGESTION_HEIGHT;
-                boolean hovered = mouseX >= sx && mouseX <= sx + sw
-                    && mouseY >= ry && mouseY <= ry + SUGGESTION_HEIGHT;
-                context.fill(sx, ry, sx + sw, ry + SUGGESTION_HEIGHT,
-                    hovered ? 0xFF555555 : 0xFF333333);
-                context.drawText(textRenderer, suggestion, sx + 3, ry + 4,
-                    0xFFFFFFFF, false);
-            }
-        }
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
