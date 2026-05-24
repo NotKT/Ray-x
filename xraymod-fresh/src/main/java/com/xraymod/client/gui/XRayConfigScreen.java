@@ -1160,6 +1160,7 @@ public class XRayConfigScreen extends Screen {
     private void updateSuggestions(String text) {
         if (text == null || text.isEmpty()) {
             suggestions = new ArrayList<>();
+            rebuildSuggestionButtons();
             return;
         }
         String lower = text.toLowerCase();
@@ -1167,6 +1168,25 @@ public class XRayConfigScreen extends Screen {
             .filter(b -> b.contains(lower))
             .limit(MAX_SUGGESTIONS)
             .collect(Collectors.toList());
+        rebuildSuggestionButtons();
+    }
+
+    private void rebuildSuggestionButtons() {
+        // Remove old suggestion buttons by reinitializing — 
+        // instead add them as real clickable widgets
+        int sx = width / 2 - 150;
+        int sy = 30;
+        int sw = 200;
+        for (int i = 0; i < suggestions.size(); i++) {
+            final String suggestion = suggestions.get(i);
+            final int ry = sy + i * SUGGESTION_HEIGHT;
+            addDrawableChild(ButtonWidget.builder(Text.literal(suggestion), btn -> {
+                if (addBlockField != null) {
+                    addBlockField.setText(suggestion);
+                    suggestions = new ArrayList<>();
+                }
+            }).dimensions(sx, ry, sw, SUGGESTION_HEIGHT).build());
+        }
     }
 
     private List<String> getSortedBlocks() {
