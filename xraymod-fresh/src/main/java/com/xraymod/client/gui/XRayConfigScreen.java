@@ -15,18 +15,16 @@ import java.util.stream.Collectors;
 public class XRayConfigScreen extends Screen {
 
     private final Screen parent;
-    private TextFieldWidget addBlockField;
-    private TextFieldWidget addEntityField;
+    private TextFieldWidget searchField;
     private TextFieldWidget rangeField;
-    private int blockScrollOffset = 0;
-    private int entityScrollOffset = 0;
+    private int whitelistScrollOffset = 0;
+    private int searchScrollOffset = 0;
     private boolean showingEntities = false;
-    private List<String> suggestions = new ArrayList<>();
-    private static final int ROW_HEIGHT = 22;
-    private static final int LIST_TOP = 115;
+    private String searchQuery = "";
+    private static final int ROW_HEIGHT = 20;
+    private static final int LIST_TOP = 90;
     private static final int LIST_BOTTOM_MARGIN = 55;
-    private static final int SUGGESTION_HEIGHT = 16;
-    private static final int MAX_SUGGESTIONS = 6;
+    private static final int SPLIT = 340; // x position splitting search list and whitelist
 
     private static final List<String> ALL_BLOCKS = Arrays.asList(
         "minecraft:acacia_button",
@@ -986,6 +984,136 @@ public class XRayConfigScreen extends Screen {
         "minecraft:zombie_head"
     );
 
+    private static final List<String> ALL_ENTITIES = Arrays.asList(
+        "minecraft:allay",
+        "minecraft:armadillo",
+        "minecraft:armor_stand",
+        "minecraft:arrow",
+        "minecraft:axolotl",
+        "minecraft:bat",
+        "minecraft:bee",
+        "minecraft:blaze",
+        "minecraft:block_display",
+        "minecraft:bogged",
+        "minecraft:breeze",
+        "minecraft:breeze_wind_charge",
+        "minecraft:camel",
+        "minecraft:cat",
+        "minecraft:cave_spider",
+        "minecraft:chest_boat",
+        "minecraft:chest_minecart",
+        "minecraft:chicken",
+        "minecraft:cod",
+        "minecraft:command_block_minecart",
+        "minecraft:cow",
+        "minecraft:creeper",
+        "minecraft:dolphin",
+        "minecraft:donkey",
+        "minecraft:dragon_fireball",
+        "minecraft:drowned",
+        "minecraft:egg",
+        "minecraft:elder_guardian",
+        "minecraft:end_crystal",
+        "minecraft:ender_dragon",
+        "minecraft:ender_pearl",
+        "minecraft:enderman",
+        "minecraft:endermite",
+        "minecraft:evoker",
+        "minecraft:evoker_fangs",
+        "minecraft:experience_bottle",
+        "minecraft:experience_orb",
+        "minecraft:eye_of_ender",
+        "minecraft:falling_block",
+        "minecraft:fireball",
+        "minecraft:firework_rocket",
+        "minecraft:fishing_bobber",
+        "minecraft:fox",
+        "minecraft:frog",
+        "minecraft:furnace_minecart",
+        "minecraft:ghast",
+        "minecraft:glow_item_frame",
+        "minecraft:glow_squid",
+        "minecraft:goat",
+        "minecraft:guardian",
+        "minecraft:hoglin",
+        "minecraft:hopper_minecart",
+        "minecraft:horse",
+        "minecraft:husk",
+        "minecraft:illusioner",
+        "minecraft:interaction",
+        "minecraft:iron_golem",
+        "minecraft:item",
+        "minecraft:item_display",
+        "minecraft:item_frame",
+        "minecraft:leash_knot",
+        "minecraft:lightning_bolt",
+        "minecraft:llama",
+        "minecraft:llama_spit",
+        "minecraft:magma_cube",
+        "minecraft:marker",
+        "minecraft:minecart",
+        "minecraft:mooshroom",
+        "minecraft:mule",
+        "minecraft:ocelot",
+        "minecraft:ominous_item_spawner",
+        "minecraft:painting",
+        "minecraft:panda",
+        "minecraft:parrot",
+        "minecraft:phantom",
+        "minecraft:pig",
+        "minecraft:piglin",
+        "minecraft:piglin_brute",
+        "minecraft:pillager",
+        "minecraft:player",
+        "minecraft:polar_bear",
+        "minecraft:potion",
+        "minecraft:pufferfish",
+        "minecraft:rabbit",
+        "minecraft:ravager",
+        "minecraft:salmon",
+        "minecraft:sheep",
+        "minecraft:shulker",
+        "minecraft:shulker_bullet",
+        "minecraft:silverfish",
+        "minecraft:skeleton",
+        "minecraft:skeleton_horse",
+        "minecraft:slime",
+        "minecraft:small_fireball",
+        "minecraft:sniffer",
+        "minecraft:snow_golem",
+        "minecraft:snowball",
+        "minecraft:spawner_minecart",
+        "minecraft:spectral_arrow",
+        "minecraft:spider",
+        "minecraft:squid",
+        "minecraft:stray",
+        "minecraft:strider",
+        "minecraft:tadpole",
+        "minecraft:text_display",
+        "minecraft:tnt",
+        "minecraft:tnt_minecart",
+        "minecraft:trader_llama",
+        "minecraft:trident",
+        "minecraft:tropical_fish",
+        "minecraft:turtle",
+        "minecraft:vex",
+        "minecraft:villager",
+        "minecraft:vindicator",
+        "minecraft:wandering_trader",
+        "minecraft:warden",
+        "minecraft:wind_charge",
+        "minecraft:witch",
+        "minecraft:wither",
+        "minecraft:wither_skeleton",
+        "minecraft:wither_skull",
+        "minecraft:wolf",
+        "minecraft:zoglin",
+        "minecraft:zombie",
+        "minecraft:zombie_horse",
+        "minecraft:zombie_villager",
+        "minecraft:zombified_piglin"
+    );
+
     public XRayConfigScreen(Screen parent) {
         super(Text.literal("KPS+ Config"));
         this.parent = parent;
@@ -994,23 +1122,43 @@ public class XRayConfigScreen extends Screen {
     @Override
     protected void init() {
         clearChildren();
-        suggestions = new ArrayList<>();
+        searchQuery = searchField != null ? searchField.getText() : "";
+
+        // Search field
+        searchField = new TextFieldWidget(
+            textRenderer, 5, 10, SPLIT - 15, 18,
+            Text.literal("Search"));
+        searchField.setPlaceholder(Text.literal(showingEntities ? "Search entities..." : "Search blocks..."));
+        searchField.setText(searchQuery);
+        searchField.setChangedListener(text -> {
+            searchQuery = text;
+            init();
+        });
+        addDrawableChild(searchField);
+        setInitialFocus(searchField);
 
         if (!showingEntities) {
-            initBlocksTab();
+            initBlocksSettings();
         } else {
-            initEntitiesTab();
+            initEntitiesSettings();
         }
 
+        // Bottom tab buttons
         addDrawableChild(ButtonWidget.builder(
             Text.literal(showingEntities ? "§7Blocks" : "§aBlocks"), btn -> {
                 showingEntities = false;
+                searchQuery = "";
+                whitelistScrollOffset = 0;
+                searchScrollOffset = 0;
                 init();
             }).dimensions(10, height - 28, 80, 20).build());
 
         addDrawableChild(ButtonWidget.builder(
             Text.literal(showingEntities ? "§aEntities" : "§7Entities"), btn -> {
                 showingEntities = true;
+                searchQuery = "";
+                whitelistScrollOffset = 0;
+                searchScrollOffset = 0;
                 init();
             }).dimensions(95, height - 28, 80, 20).build());
 
@@ -1020,37 +1168,20 @@ public class XRayConfigScreen extends Screen {
         }).dimensions(width - 90, height - 28, 80, 20).build());
     }
 
-    private void initBlocksTab() {
-        addBlockField = new TextFieldWidget(
-            textRenderer, width / 2 - 150, 10, 200, 18,
-            Text.literal("Block ID"));
-        addBlockField.setPlaceholder(Text.literal("minecraft:diamond_ore"));
-        addBlockField.setChangedListener(text -> updateSuggestions(text));
-        addDrawableChild(addBlockField);
-        setInitialFocus(addBlockField);
-
-        addDrawableChild(ButtonWidget.builder(Text.literal("Add"), btn -> {
-            String id = addBlockField.getText().trim().toLowerCase();
-            if (!id.isEmpty()) {
-                XRayState.config.addBlock(id);
-                addBlockField.setText("");
-                suggestions = new ArrayList<>();
-                init();
-            }
-        }).dimensions(width / 2 + 55, 9, 55, 20).build());
-
-        int rangeY = 60;
+    private void initBlocksSettings() {
+        // Range presets
+        int rangeY = 38;
         int[] presets = {3, 6, 9, 12};
         for (int i = 0; i < presets.length; i++) {
             final int range = presets[i];
             addDrawableChild(ButtonWidget.builder(Text.literal(range + "c"), btn -> {
                 XRayState.config.setChunkRange(range);
                 init();
-            }).dimensions(width / 2 - 90 + i * 45, rangeY, 40, 20).build());
+            }).dimensions(SPLIT + 5 + i * 38, rangeY, 34, 18).build());
         }
 
         rangeField = new TextFieldWidget(
-            textRenderer, width / 2 + 95, rangeY, 35, 18,
+            textRenderer, SPLIT + 165, rangeY, 30, 16,
             Text.literal("Range"));
         rangeField.setPlaceholder(Text.literal("6"));
         rangeField.setText(String.valueOf(XRayState.config.getChunkRange()));
@@ -1062,66 +1193,68 @@ public class XRayConfigScreen extends Screen {
                 XRayState.config.setChunkRange(val);
                 init();
             } catch (NumberFormatException ignored) {}
-        }).dimensions(width / 2 + 133, rangeY, 30, 20).build());
+        }).dimensions(SPLIT + 198, rangeY, 30, 18).build());
 
+        // Fullbright
         boolean fb = XRayState.config.isFullbright();
         addDrawableChild(ButtonWidget.builder(
             Text.literal("Fullbright: " + (fb ? "§aON" : "§cOFF")), btn -> {
                 XRayState.config.setFullbright(!XRayState.config.isFullbright());
                 init();
-            }).dimensions(width / 2 - 60, 88, 120, 20).build());
+            }).dimensions(SPLIT + 5, 60, 120, 18).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Reset Defaults"), btn -> {
+        // Reset defaults
+        addDrawableChild(ButtonWidget.builder(Text.literal("Reset"), btn -> {
             XRayState.config.resetToDefaults();
-            blockScrollOffset = 0;
+            whitelistScrollOffset = 0;
             init();
-        }).dimensions(width / 2 - 60, height - 28, 120, 20).build());
+        }).dimensions(SPLIT + 130, 60, 60, 18).build());
 
-        List<String> blocks = getSortedBlocks();
+        // Search results - click to add
+        List<String> results = getSearchResults(ALL_BLOCKS, searchQuery);
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
         int visibleRows = listHeight / ROW_HEIGHT;
-        int maxScroll = Math.max(0, blocks.size() - visibleRows);
-        blockScrollOffset = Math.min(blockScrollOffset, maxScroll);
+        int maxScroll = Math.max(0, results.size() - visibleRows);
+        searchScrollOffset = Math.min(searchScrollOffset, maxScroll);
 
-        for (int i = 0; i < visibleRows && (i + blockScrollOffset) < blocks.size(); i++) {
-            final String blockId = blocks.get(i + blockScrollOffset);
+        for (int i = 0; i < visibleRows && (i + searchScrollOffset) < results.size(); i++) {
+            final String blockId = results.get(i + searchScrollOffset);
+            int y = LIST_TOP + i * ROW_HEIGHT;
+            addDrawableChild(ButtonWidget.builder(Text.literal("+ " + blockId), btn -> {
+                XRayState.config.addBlock(blockId);
+                init();
+            }).dimensions(5, y, SPLIT - 15, ROW_HEIGHT - 2).build());
+        }
+
+        // Whitelist - click X to remove
+        List<String> whitelist = getSortedBlocks();
+        int wMaxScroll = Math.max(0, whitelist.size() - visibleRows);
+        whitelistScrollOffset = Math.min(whitelistScrollOffset, wMaxScroll);
+
+        for (int i = 0; i < visibleRows && (i + whitelistScrollOffset) < whitelist.size(); i++) {
+            final String blockId = whitelist.get(i + whitelistScrollOffset);
             int y = LIST_TOP + i * ROW_HEIGHT;
             addDrawableChild(ButtonWidget.builder(Text.literal("X"), btn -> {
                 XRayState.config.removeBlock(blockId);
                 init();
-            }).dimensions(width - 35, y + 2, 28, 18).build());
+            }).dimensions(width - 30, y, 25, ROW_HEIGHT - 2).build());
         }
     }
 
-    private void initEntitiesTab() {
-        addEntityField = new TextFieldWidget(
-            textRenderer, width / 2 - 150, 10, 200, 18,
-            Text.literal("Entity ID"));
-        addEntityField.setPlaceholder(Text.literal("minecraft:zombie"));
-        addDrawableChild(addEntityField);
-        setInitialFocus(addEntityField);
-
-        addDrawableChild(ButtonWidget.builder(Text.literal("Add Glow"), btn -> {
-            String id = addEntityField.getText().trim().toLowerCase();
-            if (!id.isEmpty()) {
-                XRayState.config.addGlowEntity(id);
-                addEntityField.setText("");
-                init();
-            }
-        }).dimensions(width / 2 + 55, 9, 70, 20).build());
-
-        int rangeY = 60;
+    private void initEntitiesSettings() {
+        // Entity glow range presets
+        int rangeY = 38;
         int[] presets = {3, 6, 9, 12};
         for (int i = 0; i < presets.length; i++) {
             final int range = presets[i];
             addDrawableChild(ButtonWidget.builder(Text.literal(range + "c"), btn -> {
                 XRayState.config.setEntityGlowRange(range);
                 init();
-            }).dimensions(width / 2 - 90 + i * 45, rangeY, 40, 20).build());
+            }).dimensions(SPLIT + 5 + i * 38, rangeY, 34, 18).build());
         }
 
         TextFieldWidget entityRangeField = new TextFieldWidget(
-            textRenderer, width / 2 + 95, rangeY, 35, 18,
+            textRenderer, SPLIT + 165, rangeY, 30, 16,
             Text.literal("Range"));
         entityRangeField.setPlaceholder(Text.literal("6"));
         entityRangeField.setText(String.valueOf(XRayState.config.getEntityGlowRange()));
@@ -1133,43 +1266,53 @@ public class XRayConfigScreen extends Screen {
                 XRayState.config.setEntityGlowRange(val);
                 init();
             } catch (NumberFormatException ignored) {}
-        }).dimensions(width / 2 + 133, rangeY, 30, 20).build());
+        }).dimensions(SPLIT + 198, rangeY, 30, 18).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Reset Defaults"), btn -> {
+        // Reset
+        addDrawableChild(ButtonWidget.builder(Text.literal("Reset"), btn -> {
             XRayState.config.resetToDefaults();
-            entityScrollOffset = 0;
+            whitelistScrollOffset = 0;
             init();
-        }).dimensions(width / 2 - 60, height - 28, 120, 20).build());
+        }).dimensions(SPLIT + 5, 60, 60, 18).build());
 
-        List<String> entities = getSortedGlowEntities();
+        // Search results - click to add
+        List<String> results = getSearchResults(ALL_ENTITIES, searchQuery);
         int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
         int visibleRows = listHeight / ROW_HEIGHT;
-        int maxScroll = Math.max(0, entities.size() - visibleRows);
-        entityScrollOffset = Math.min(entityScrollOffset, maxScroll);
+        int maxScroll = Math.max(0, results.size() - visibleRows);
+        searchScrollOffset = Math.min(searchScrollOffset, maxScroll);
 
-        for (int i = 0; i < visibleRows && (i + entityScrollOffset) < entities.size(); i++) {
-            final String entityId = entities.get(i + entityScrollOffset);
+        for (int i = 0; i < visibleRows && (i + searchScrollOffset) < results.size(); i++) {
+            final String entityId = results.get(i + searchScrollOffset);
+            int y = LIST_TOP + i * ROW_HEIGHT;
+            addDrawableChild(ButtonWidget.builder(Text.literal("+ " + entityId), btn -> {
+                XRayState.config.addGlowEntity(entityId);
+                init();
+            }).dimensions(5, y, SPLIT - 15, ROW_HEIGHT - 2).build());
+        }
+
+        // Glow list - click X to remove
+        List<String> glowList = getSortedGlowEntities();
+        int wMaxScroll = Math.max(0, glowList.size() - visibleRows);
+        whitelistScrollOffset = Math.min(whitelistScrollOffset, wMaxScroll);
+
+        for (int i = 0; i < visibleRows && (i + whitelistScrollOffset) < glowList.size(); i++) {
+            final String entityId = glowList.get(i + whitelistScrollOffset);
             int y = LIST_TOP + i * ROW_HEIGHT;
             addDrawableChild(ButtonWidget.builder(Text.literal("X"), btn -> {
                 XRayState.config.removeGlowEntity(entityId);
                 init();
-            }).dimensions(width - 35, y + 2, 28, 18).build());
+            }).dimensions(width - 30, y, 25, ROW_HEIGHT - 2).build());
         }
     }
 
-    private void updateSuggestions(String text) {
-        if (text == null || text.isEmpty()) {
-            suggestions = new ArrayList<>();
-            return;
-        }
-        String lower = text.toLowerCase();
-        suggestions = ALL_BLOCKS.stream()
-            .filter(b -> b.contains(lower))
-            .limit(MAX_SUGGESTIONS)
+    private List<String> getSearchResults(List<String> source, String query) {
+        if (query == null || query.isEmpty()) return new ArrayList<>(source);
+        String lower = query.toLowerCase();
+        return source.stream()
+            .filter(s -> s.contains(lower))
             .collect(Collectors.toList());
     }
-
-    private void rebuildSuggestionButtons() {}
 
     private List<String> getSortedBlocks() {
         List<String> blocks = new ArrayList<>(XRayState.config.getVisibleBlocks());
@@ -1186,118 +1329,67 @@ public class XRayConfigScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, width, height, 0xCC000000);
+
+        // Vertical divider between search and whitelist
+        context.fill(SPLIT, LIST_TOP - 10, SPLIT + 1, height - LIST_BOTTOM_MARGIN, 0x88FFFFFF);
+
+        // Horizontal dividers
         context.fill(0, LIST_TOP - 5, width, LIST_TOP - 4, 0x88FFFFFF);
         context.fill(0, height - LIST_BOTTOM_MARGIN + 5, width,
             height - LIST_BOTTOM_MARGIN + 6, 0x88FFFFFF);
 
-        if (!showingEntities) {
-            context.drawText(textRenderer, "Add Block:", 10, 14, 0xFF00BFFF, true);
-            context.drawText(textRenderer,
-                "XRay Range: (current: " + XRayState.config.getChunkRange() + " chunks)",
-                10, 46, 0xFFFFAA00, true);
-            context.drawText(textRenderer,
-                "Block Whitelist (stay visible during XRay):",
-                10, LIST_TOP - 18, 0xFF00BFFF, true);
+        // Column headers
+        context.drawText(textRenderer,
+            showingEntities ? "All Entities (click to add)" : "All Blocks (click to add)",
+            5, LIST_TOP - 18, 0xFF00BFFF, true);
+        context.drawText(textRenderer,
+            showingEntities ? "Glow List" : "XRay Whitelist",
+            SPLIT + 5, LIST_TOP - 18, 0xFF00BFFF, true);
 
-            List<String> blocks = getSortedBlocks();
-            int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
-            int visibleRows = listHeight / ROW_HEIGHT;
-            for (int i = 0; i < visibleRows && (i + blockScrollOffset) < blocks.size(); i++) {
-                String blockId = blocks.get(i + blockScrollOffset);
-                int y = LIST_TOP + i * ROW_HEIGHT;
-                if (i % 2 == 0) context.fill(0, y, width, y + ROW_HEIGHT, 0x22FFFFFF);
-                context.fill(5, y + 3, 15, y + 13, 0xFFFFAA00);
-                context.drawText(textRenderer, blockId, 18, y + 6, 0xFFFFFF00, true);
-            }
+        // Settings labels
+        context.drawText(textRenderer,
+            showingEntities ? "Glow Range:" : "XRay Range:",
+            SPLIT + 5, 30, 0xFFFFAA00, true);
 
-            // Draw autocomplete suggestions
-            if (!suggestions.isEmpty() && addBlockField != null) {
-                int sx = width / 2 - 150;
-                int sy = 30;
-                int sw = 200;
-                for (int i = 0; i < suggestions.size(); i++) {
-                    String suggestion = suggestions.get(i);
-                    int ry = sy + i * SUGGESTION_HEIGHT;
-                    boolean hovered = mouseX >= sx && mouseX <= sx + sw
-                        && mouseY >= ry && mouseY <= ry + SUGGESTION_HEIGHT;
-                    context.fill(sx, ry, sx + sw, ry + SUGGESTION_HEIGHT,
-                        hovered ? 0xFF555555 : 0xFF333333);
-                    context.drawText(textRenderer, suggestion, sx + 3, ry + 4,
-                        0xFFFFFFFF, false);
-                }
-            }
-        } else {
-            context.drawText(textRenderer, "Add Entity to glow:", 10, 14, 0xFF00BFFF, true);
-            context.drawText(textRenderer,
-                "Glow Range: (current: " + XRayState.config.getEntityGlowRange() + " chunks)",
-                10, 46, 0xFFFFAA00, true);
-            context.drawText(textRenderer,
-                "Glow List (these entities will glow):",
-                10, LIST_TOP - 18, 0xFF00BFFF, true);
-            context.drawText(textRenderer,
-                "Hold §eC §fto activate",
-                10, 36, 0xFFAAAAAA, true);
+        // Whitelist items text
+        List<String> whitelist = showingEntities ? getSortedGlowEntities() : getSortedBlocks();
+        int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
+        int visibleRows = listHeight / ROW_HEIGHT;
+        for (int i = 0; i < visibleRows && (i + whitelistScrollOffset) < whitelist.size(); i++) {
+            String id = whitelist.get(i + whitelistScrollOffset);
+            int y = LIST_TOP + i * ROW_HEIGHT;
+            if (i % 2 == 0) context.fill(SPLIT + 1, y, width, y + ROW_HEIGHT, 0x22FFFFFF);
+            context.drawText(textRenderer, id, SPLIT + 5, y + 5, 0xFFFFFF00, true);
+        }
 
-            List<String> entities = getSortedGlowEntities();
-            int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
-            int visibleRows = listHeight / ROW_HEIGHT;
-            for (int i = 0; i < visibleRows && (i + entityScrollOffset) < entities.size(); i++) {
-                String entityId = entities.get(i + entityScrollOffset);
-                int y = LIST_TOP + i * ROW_HEIGHT;
-                if (i % 2 == 0) context.fill(0, y, width, y + ROW_HEIGHT, 0x22FFFFFF);
-                context.fill(5, y + 3, 15, y + 13, 0xFF00FF00);
-                context.drawText(textRenderer, entityId, 18, y + 6, 0xFF00FF00, true);
-            }
-
-            if (entities.isEmpty()) {
-                context.drawText(textRenderer,
-                    "No entities added — nothing will glow",
-                    10, LIST_TOP + 10, 0xFF888888, true);
-            }
+        if (whitelist.isEmpty()) {
+            context.drawText(textRenderer, "Empty", SPLIT + 5, LIST_TOP + 5, 0xFF888888, true);
         }
 
         super.render(context, mouseX, mouseY, delta);
-
-    }
-
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (!showingEntities && !suggestions.isEmpty()) {
-            int sx = width / 2 - 150;
-            int sy = 30;
-            int sw = 200;
-            for (int i = 0; i < suggestions.size(); i++) {
-                int ry = sy + i * SUGGESTION_HEIGHT;
-                if (mouseX >= sx && mouseX <= sx + sw
-                    && mouseY >= ry && mouseY <= ry + SUGGESTION_HEIGHT) {
-                    String selected = suggestions.get(i);
-                    suggestions = new ArrayList<>();
-                    if (addBlockField != null) {
-                        addBlockField.setText(selected);
-                    }
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY,
                                   double horizontalAmount, double verticalAmount) {
-        if (!showingEntities) {
-            List<String> blocks = getSortedBlocks();
+        if (mouseX < SPLIT) {
+            // Scrolling search results
+            List<String> results = showingEntities
+                ? getSearchResults(ALL_ENTITIES, searchQuery)
+                : getSearchResults(ALL_BLOCKS, searchQuery);
             int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
             int visibleRows = listHeight / ROW_HEIGHT;
-            int maxScroll = Math.max(0, blocks.size() - visibleRows);
-            blockScrollOffset = Math.max(0, Math.min(maxScroll,
-                blockScrollOffset - (int) verticalAmount));
+            int maxScroll = Math.max(0, results.size() - visibleRows);
+            searchScrollOffset = Math.max(0, Math.min(maxScroll,
+                searchScrollOffset - (int) verticalAmount));
         } else {
-            List<String> entities = getSortedGlowEntities();
+            // Scrolling whitelist
+            List<String> whitelist = showingEntities ? getSortedGlowEntities() : getSortedBlocks();
             int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
             int visibleRows = listHeight / ROW_HEIGHT;
-            int maxScroll = Math.max(0, entities.size() - visibleRows);
-            entityScrollOffset = Math.max(0, Math.min(maxScroll,
-                entityScrollOffset - (int) verticalAmount));
+            int maxScroll = Math.max(0, whitelist.size() - visibleRows);
+            whitelistScrollOffset = Math.max(0, Math.min(maxScroll,
+                whitelistScrollOffset - (int) verticalAmount));
         }
         init();
         return true;
