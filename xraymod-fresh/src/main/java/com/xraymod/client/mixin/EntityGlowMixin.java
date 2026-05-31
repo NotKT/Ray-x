@@ -37,7 +37,7 @@ public abstract class EntityGlowMixin {
         "minecraft:spider", "minecraft:stray", "minecraft:vex",
         "minecraft:vindicator", "minecraft:warden", "minecraft:witch",
         "minecraft:wither", "minecraft:wither_skeleton", "minecraft:zoglin",
-        "minecraft:zombie", "minecraft:zombie_villager", "minecraft:zombified_piglin",
+        "minecraft:zombie", "minecraft:zombie_villager", "minecraft:zombified_piglin"
     ));
 
     private static final Set<String> PASSIVE = new HashSet<>(Arrays.asList(
@@ -56,7 +56,7 @@ public abstract class EntityGlowMixin {
     ));
 
     private static final Set<String> NEUTRAL = new HashSet<>(Arrays.asList(
-        "minecraft:bee", "minecraft:dolphin","minecraft:enderman", "minecraft:fox",
+        "minecraft:bee", "minecraft:dolphin", "minecraft:enderman", "minecraft:fox",
         "minecraft:goat", "minecraft:iron_golem", "minecraft:llama",
         "minecraft:piglin", "minecraft:polar_bear", "minecraft:trader_llama",
         "minecraft:wolf"
