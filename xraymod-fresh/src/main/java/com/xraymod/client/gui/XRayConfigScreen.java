@@ -1182,8 +1182,12 @@ public class XRayConfigScreen extends Screen {
             final int ry = sy + i * SUGGESTION_HEIGHT;
             addDrawableChild(ButtonWidget.builder(Text.literal(suggestion), btn -> {
                 if (addBlockField != null) {
-                    addBlockField.setText(suggestion);
+                    String selected = suggestion;
                     suggestions = new ArrayList<>();
+                    init();
+                    if (addBlockField != null) {
+                        addBlockField.setText(selected);
+                    }
                 }
             }).dimensions(sx, ry, sw, SUGGESTION_HEIGHT).build());
         }
