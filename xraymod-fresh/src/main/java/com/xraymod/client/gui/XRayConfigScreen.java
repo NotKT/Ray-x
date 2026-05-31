@@ -1160,7 +1160,6 @@ public class XRayConfigScreen extends Screen {
     private void updateSuggestions(String text) {
         if (text == null || text.isEmpty()) {
             suggestions = new ArrayList<>();
-            rebuildSuggestionButtons();
             return;
         }
         String lower = text.toLowerCase();
@@ -1168,47 +1167,9 @@ public class XRayConfigScreen extends Screen {
             .filter(b -> b.contains(lower))
             .limit(MAX_SUGGESTIONS)
             .collect(Collectors.toList());
-        rebuildSuggestionButtons();
     }
 
-    private void rebuildSuggestionButtons() {
-        clearChildren();
-        initBlocksTab();
-
-        // Add tab buttons and done button again
-        addDrawableChild(ButtonWidget.builder(
-            Text.literal("§aBlocks"), btn -> {
-                showingEntities = false;
-                init();
-            }).dimensions(10, height - 28, 80, 20).build());
-
-        addDrawableChild(ButtonWidget.builder(
-            Text.literal("§7Entities"), btn -> {
-                showingEntities = true;
-                init();
-            }).dimensions(95, height - 28, 80, 20).build());
-
-        addDrawableChild(ButtonWidget.builder(Text.literal("Done"), btn -> {
-            assert client != null;
-            client.setScreen(parent);
-        }).dimensions(width - 90, height - 28, 80, 20).build());
-
-        int sx = width / 2 - 150;
-        int sy = 30;
-        int sw = 200;
-        for (int i = 0; i < suggestions.size(); i++) {
-            final String suggestion = suggestions.get(i);
-            final int ry = sy + i * SUGGESTION_HEIGHT;
-            addDrawableChild(ButtonWidget.builder(Text.literal(suggestion), btn -> {
-                String selected = suggestion;
-                suggestions = new ArrayList<>();
-                init();
-                if (addBlockField != null) {
-                    addBlockField.setText(selected);
-                }
-            }).dimensions(sx, ry, sw, SUGGESTION_HEIGHT).build());
-        }
-    }
+    private void rebuildSuggestionButtons() {}
 
     private List<String> getSortedBlocks() {
         List<String> blocks = new ArrayList<>(XRayState.config.getVisibleBlocks());
@@ -1300,8 +1261,7 @@ public class XRayConfigScreen extends Screen {
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Handle suggestion clicks
-        if (!showingEntities && !suggestions.isEmpty() && addBlockField != null) {
+        if (!showingEntities && !suggestions.isEmpty()) {
             int sx = width / 2 - 150;
             int sy = 30;
             int sw = 200;
@@ -1309,8 +1269,11 @@ public class XRayConfigScreen extends Screen {
                 int ry = sy + i * SUGGESTION_HEIGHT;
                 if (mouseX >= sx && mouseX <= sx + sw
                     && mouseY >= ry && mouseY <= ry + SUGGESTION_HEIGHT) {
-                    addBlockField.setText(suggestions.get(i));
+                    String selected = suggestions.get(i);
                     suggestions = new ArrayList<>();
+                    if (addBlockField != null) {
+                        addBlockField.setText(selected);
+                    }
                     return true;
                 }
             }
