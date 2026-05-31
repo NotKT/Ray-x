@@ -22,7 +22,7 @@ public class XRayConfigScreen extends Screen {
     private boolean showingEntities = false;
     private String searchQuery = "";
     private static final int ROW_HEIGHT = 20;
-    private static final int LIST_TOP = 100;
+    private static final int LIST_TOP = 110;
     private static final int LIST_BOTTOM_MARGIN = 55;
     private static final int SPLIT = 340; // x position splitting search list and whitelist
 
@@ -1203,6 +1203,14 @@ public class XRayConfigScreen extends Screen {
                 init();
             }).dimensions(SPLIT + 5, 60, 120, 18).build());
 
+        // XRay mode toggle
+        boolean xrayToggle = XRayState.config.isXrayToggleMode();
+        addDrawableChild(ButtonWidget.builder(
+            Text.literal("XRay: " + (xrayToggle ? "§aToggle" : "§eHold")), btn -> {
+                XRayState.config.setXrayToggleMode(!XRayState.config.isXrayToggleMode());
+                init();
+            }).dimensions(SPLIT + 5, 82, 120, 18).build());
+        
         // Reset defaults
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset"), btn -> {
             XRayState.config.resetToDefaults();
@@ -1268,6 +1276,14 @@ public class XRayConfigScreen extends Screen {
             } catch (NumberFormatException ignored) {}
         }).dimensions(SPLIT + 198, rangeY, 30, 18).build());
 
+        // Entity glow mode toggle
+        boolean glowToggle = XRayState.config.isEntityGlowToggleMode();
+        addDrawableChild(ButtonWidget.builder(
+            Text.literal("Glow: " + (glowToggle ? "§aToggle" : "§eHold")), btn -> {
+                XRayState.config.setEntityGlowToggleMode(!XRayState.config.isEntityGlowToggleMode());
+                init();
+            }).dimensions(SPLIT + 5, 82, 120, 18).build());
+        
         // Reset
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset"), btn -> {
             XRayState.config.resetToDefaults();
