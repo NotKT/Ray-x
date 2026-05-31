@@ -8,10 +8,8 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.option.KeyBinding.Category;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
@@ -21,8 +19,8 @@ public class XRayClient implements ClientModInitializer {
     public static KeyBinding xrayKey;
     public static KeyBinding configKey;
     public static KeyBinding entityGlowKey;
-    private static boolean wasActive = false;
-    private static boolean wasEntityGlowActive = false;
+    private static boolean wasXrayKeyPressed = false;
+    private static boolean wasEntityGlowKeyPressed = false;
 
     @Override
     public void onInitializeClient() {
@@ -45,25 +43,45 @@ public class XRayClient implements ClientModInitializer {
                 XRayState.playerChunkZ = client.player.getBlockPos().getZ() >> 4;
             }
 
-            // XRay toggle
-            boolean isActive = xrayKey.isPressed();
-            if (isActive != wasActive) {
-                XRayState.active = isActive;
-                wasActive = isActive;
-                if (client.worldRenderer != null) {
-                    client.worldRenderer.reload();
+            // XRay — hold or toggle mode
+            boolean xrayKeyDown = xrayKey.isPressed();
+            if (XRayState.config.isXrayToggleMode()) {
+                if (xrayKeyDown && !wasXrayKeyPressed) {
+                    XRayState.active = !XRayState.active;
+                    if (client.worldRenderer != null) client.worldRenderer.reload();
+                }
+            } else {
+                if (xrayKeyDown != XRayState.active) {
+                    XRayState.active = xrayKeyDown;
+                    if (client.worldRenderer != null) client.worldRenderer.reload();
                 }
             }
+            wasXrayKeyPressed = xrayKeyDown;
 
-            // Entity glow toggle
-            boolean isEntityGlowActive = entityGlowKey.isPressed();
-            if (isEntityGlowActive != wasEntityGlowActive) {
-                XRayState.entityGlowActive = isEntityGlowActive;
-                wasEntityGlowActive = isEntityGlowActive;
+            // Entity glow — hold or toggle mode
+            boolean entityKeyDown = entityGlowKey.isPressed();
+            if (XRayState.config.isEntityGlowToggleMode()) {
+                if (entityKeyDown && !wasEntityGlowKeyPressed) {
+                    XRayState.entityGlowActive = !XRayState.entityGlowActive;
+                    if (!XRayState.entityGlowActive && client.world != null) {
+                        for (net.minecraft.entity.Entity entity : client.world.getEntities()) {
+                            entity.setGlowing(false);
+                        }
+                    }
+                }
+            } else {
+                if (entityKeyDown != XRayState.entityGlowActive) {
+                    XRayState.entityGlowActive = entityKeyDown;
+                    if (!XRayState.entityGlowActive && client.world != null) {
+                        for (net.minecraft.entity.Entity entity : client.world.getEntities()) {
+                            entity.setGlowing(false);
+                        }
+                    }
+                }
             }
+            wasEntityGlowKeyPressed = entityKeyDown;
 
-
-            // Fullbright via night vision
+            // Fullbright
             if (client.player != null) {
                 boolean hasnv = client.player.hasStatusEffect(StatusEffects.NIGHT_VISION);
                 if (XRayState.config.isFullbright() && !hasnv) {
@@ -85,17 +103,20 @@ public class XRayClient implements ClientModInitializer {
 
             // Action bar
             if (client.player != null) {
+                String xrayMode = XRayState.config.isXrayToggleMode() ? "Toggle" : "Hold";
+                String glowMode = XRayState.config.isEntityGlowToggleMode() ? "Toggle" : "Hold";
                 if (XRayState.active && XRayState.entityGlowActive) {
                     client.player.sendMessage(Text.literal(
-                        "§bKPS+ §aXRay + EntityGlow ACTIVE §7— Range: §f"
-                        + XRayState.config.getChunkRange() + " chunks"), true);
+                        "§bKPS+ §aXRay + Glow ACTIVE §7| Range: §f"
+                        + XRayState.config.getChunkRange() + "c"), true);
                 } else if (XRayState.active) {
                     client.player.sendMessage(Text.literal(
-                        "§bKPS+ §aXRay ACTIVE §7— §eX §7to disable | Range: §f"
-                        + XRayState.config.getChunkRange() + " chunks"), true);
+                        "§bKPS+ §aXRay ACTIVE §7[" + xrayMode + "] Range: §f"
+                        + XRayState.config.getChunkRange() + "c"), true);
                 } else if (XRayState.entityGlowActive) {
                     client.player.sendMessage(Text.literal(
-                        "§bKPS+ §aEntity Glow ACTIVE §7— §eC §7to disable"), true);
+                        "§bKPS+ §aGlow ACTIVE §7[" + glowMode + "] Range: §f"
+                        + XRayState.config.getEntityGlowRange() + "c"), true);
                 }
             }
         });
