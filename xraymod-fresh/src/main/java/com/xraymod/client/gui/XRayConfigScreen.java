@@ -1172,8 +1172,27 @@ public class XRayConfigScreen extends Screen {
     }
 
     private void rebuildSuggestionButtons() {
-        // Remove old suggestion buttons by reinitializing — 
-        // instead add them as real clickable widgets
+        clearChildren();
+        initBlocksTab();
+
+        // Add tab buttons and done button again
+        addDrawableChild(ButtonWidget.builder(
+            Text.literal("§aBlocks"), btn -> {
+                showingEntities = false;
+                init();
+            }).dimensions(10, height - 28, 80, 20).build());
+
+        addDrawableChild(ButtonWidget.builder(
+            Text.literal("§7Entities"), btn -> {
+                showingEntities = true;
+                init();
+            }).dimensions(95, height - 28, 80, 20).build());
+
+        addDrawableChild(ButtonWidget.builder(Text.literal("Done"), btn -> {
+            assert client != null;
+            client.setScreen(parent);
+        }).dimensions(width - 90, height - 28, 80, 20).build());
+
         int sx = width / 2 - 150;
         int sy = 30;
         int sw = 200;
@@ -1181,13 +1200,11 @@ public class XRayConfigScreen extends Screen {
             final String suggestion = suggestions.get(i);
             final int ry = sy + i * SUGGESTION_HEIGHT;
             addDrawableChild(ButtonWidget.builder(Text.literal(suggestion), btn -> {
+                String selected = suggestion;
+                suggestions = new ArrayList<>();
+                init();
                 if (addBlockField != null) {
-                    String selected = suggestion;
-                    suggestions = new ArrayList<>();
-                    init();
-                    if (addBlockField != null) {
-                        addBlockField.setText(selected);
-                    }
+                    addBlockField.setText(selected);
                 }
             }).dimensions(sx, ry, sw, SUGGESTION_HEIGHT).build());
         }
