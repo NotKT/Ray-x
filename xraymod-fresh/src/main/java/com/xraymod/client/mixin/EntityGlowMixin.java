@@ -38,7 +38,6 @@ public abstract class EntityGlowMixin {
         "minecraft:vindicator", "minecraft:warden", "minecraft:witch",
         "minecraft:wither", "minecraft:wither_skeleton", "minecraft:zoglin",
         "minecraft:zombie", "minecraft:zombie_villager", "minecraft:zombified_piglin",
-        
     ));
 
     private static final Set<String> PASSIVE = new HashSet<>(Arrays.asList(
