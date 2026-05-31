@@ -22,7 +22,7 @@ public class XRayConfigScreen extends Screen {
     private boolean showingEntities = false;
     private String searchQuery = "";
     private static final int ROW_HEIGHT = 20;
-    private static final int LIST_TOP = 90;
+    private static final int LIST_TOP = 100;
     private static final int LIST_BOTTOM_MARGIN = 55;
     private static final int SPLIT = 340; // x position splitting search list and whitelist
 
@@ -1344,7 +1344,7 @@ public class XRayConfigScreen extends Screen {
             5, LIST_TOP - 18, 0xFF00BFFF, true);
         context.drawText(textRenderer,
             showingEntities ? "Glow List" : "XRay Whitelist",
-            SPLIT + 5, LIST_TOP - 18, 0xFF00BFFF, true);
+            SPLIT + 5, LIST_TOP - 8, 0xFF00BFFF, true);
 
         // Settings labels
         context.drawText(textRenderer,
