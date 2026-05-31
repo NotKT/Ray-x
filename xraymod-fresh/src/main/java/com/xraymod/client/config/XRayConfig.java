@@ -23,6 +23,8 @@ public class XRayConfig {
     private int chunkRange = 6;
     private int entityGlowRange = 6;
     private boolean fullbright = false;
+    private boolean xrayToggleMode = false;
+    private boolean entityGlowToggleMode = false;
 
     public static final Set<String> DEFAULT_VISIBLE_BLOCKS = Set.of(
         "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore",
@@ -59,12 +61,20 @@ public class XRayConfig {
     public boolean isFullbright() { return fullbright; }
     public void setFullbright(boolean fullbright) { this.fullbright = fullbright; save(); }
 
+    public boolean isXrayToggleMode() { return xrayToggleMode; }
+    public void setXrayToggleMode(boolean toggle) { this.xrayToggleMode = toggle; save(); }
+
+    public boolean isEntityGlowToggleMode() { return entityGlowToggleMode; }
+    public void setEntityGlowToggleMode(boolean toggle) { this.entityGlowToggleMode = toggle; save(); }
+
     public void resetToDefaults() {
         visibleBlocks = new HashSet<>(DEFAULT_VISIBLE_BLOCKS);
         glowEntities = new HashSet<>();
         chunkRange = 6;
         entityGlowRange = 6;
         fullbright = false;
+        xrayToggleMode = false;
+        entityGlowToggleMode = false;
         save();
     }
 
@@ -76,6 +86,8 @@ public class XRayConfig {
             obj.addProperty("chunkRange", chunkRange);
             obj.addProperty("entityGlowRange", entityGlowRange);
             obj.addProperty("fullbright", fullbright);
+            obj.addProperty("xrayToggleMode", xrayToggleMode);
+            obj.addProperty("entityGlowToggleMode", entityGlowToggleMode);
             GSON.toJson(obj, w);
         } catch (IOException e) {
             System.err.println("[KPS+] Save failed: " + e.getMessage());
@@ -101,6 +113,8 @@ public class XRayConfig {
             if (obj.has("chunkRange")) cfg.chunkRange = obj.get("chunkRange").getAsInt();
             if (obj.has("entityGlowRange")) cfg.entityGlowRange = obj.get("entityGlowRange").getAsInt();
             if (obj.has("fullbright")) cfg.fullbright = obj.get("fullbright").getAsBoolean();
+            if (obj.has("xrayToggleMode")) cfg.xrayToggleMode = obj.get("xrayToggleMode").getAsBoolean();
+            if (obj.has("entityGlowToggleMode")) cfg.entityGlowToggleMode = obj.get("entityGlowToggleMode").getAsBoolean();
         } catch (IOException e) {
             System.err.println("[KPS+] Load failed: " + e.getMessage());
         }
