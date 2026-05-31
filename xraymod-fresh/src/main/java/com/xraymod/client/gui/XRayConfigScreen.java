@@ -1344,7 +1344,7 @@ public class XRayConfigScreen extends Screen {
             5, LIST_TOP - 18, 0xFF00BFFF, true);
         context.drawText(textRenderer,
             showingEntities ? "Glow List" : "XRay Whitelist",
-            SPLIT + 5, LIST_TOP - 5, 0xFF00BFFF, true);
+            SPLIT + 5, LIST_TOP - 18, 0xFF00BFFF, true);
 
         // Settings labels
         context.drawText(textRenderer,
