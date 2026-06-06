@@ -1,12 +1,21 @@
 package com.xraymod.client;
 
-import com.xraymod.client.config.XRayConfig;
+public class XRayState {
+    // XRay
+    public static boolean xrayActive = false;
+    public static int playerChunkX = 0;
+    public static int playerChunkZ = 0;
 
-public final class XRayState {
-    private XRayState() {}
-    public static volatile boolean active = false;
-    public static volatile boolean entityGlowActive = false;
-    public static XRayConfig config;
-    public static volatile int playerChunkX = 0;
-    public static volatile int playerChunkZ = 0;
+    // Entity Glow
+    public static boolean entityGlowActive = false;
+
+    // Fullbright
+    public static boolean fullbrightActive = false;
+
+    // Utility
+    public static boolean flyEnabled = false;
+    public static boolean fastBreakEnabled = false;
+    public static boolean reachEnabled = false;
+    public static boolean noFallEnabled = false;
+    public static boolean maceWindBurstEnabled = false;
 }
