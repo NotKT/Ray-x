@@ -11,7 +11,7 @@ public class XRayState {
 
     // Fullbright
     public static boolean fullbrightActive = false;
-
+    
     // Utility
     public static boolean flyEnabled = false;
     public static boolean fastBreakEnabled = false;
