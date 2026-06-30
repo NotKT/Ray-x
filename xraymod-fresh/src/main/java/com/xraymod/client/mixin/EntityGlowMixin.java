@@ -1,6 +1,7 @@
 package com.xraymod.client.mixin;
 
 import com.xraymod.client.XRayState;
+import com.xraymod.client.config.XRayConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.registry.Registries;
@@ -91,16 +92,12 @@ public abstract class EntityGlowMixin {
         if (client.player == null) return;
         if (self == client.player) return;
 
-        // Range check
-        int rangeBlocks = XRayState.config != null
-            ? XRayState.config.getEntityGlowRange() * 16 : 96;
-        if (client.player.squaredDistanceTo(self) > rangeBlocks * rangeBlocks) return;
+        int rangeBlocks = XRayConfig.instance.entityGlowRange * 16;
+        if (client.player.squaredDistanceTo(self) > (double) rangeBlocks * rangeBlocks) return;
 
-        // Whitelist check
         String entityId = Registries.ENTITY_TYPE.getId(self.getType()).toString();
-        if (XRayState.config == null || !XRayState.config.shouldGlow(entityId)) return;
+        if (!XRayConfig.instance.glowEntities.contains(entityId)) return;
 
-        // Assign color team
         if (client.world != null) {
             Scoreboard scoreboard = client.world.getScoreboard();
             ensureTeams(scoreboard);
@@ -120,7 +117,7 @@ public abstract class EntityGlowMixin {
         if (PASSIVE.contains(entityId)) return TEAM_PASSIVE;
         if (NEUTRAL.contains(entityId)) return TEAM_NEUTRAL;
         if (ITEMS_VEHICLES.contains(entityId)) return TEAM_VEHICLE;
-        return TEAM_NEUTRAL; // default
+        return TEAM_NEUTRAL;
     }
 
     private void ensureTeams(Scoreboard scoreboard) {
