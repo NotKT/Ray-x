@@ -20,7 +20,7 @@ public abstract class BlockRenderMixin {
         cancellable = true
     )
     private void xray_filterBlockState(BlockPos pos, CallbackInfoReturnable<BlockState> cir) {
-        if (!XRayState.active) return;
+        if (!XRayState.xrayActive) return;
 
         BlockState state = cir.getReturnValue();
         if (state == null || state.isAir()) return;
@@ -28,7 +28,7 @@ public abstract class BlockRenderMixin {
         // Check chunk range
         int blockChunkX = pos.getX() >> 4;
         int blockChunkZ = pos.getZ() >> 4;
-        int range = XRayState.config != null ? XRayState.config.getChunkRange() : 6;
+        int range = 6; // TODO: wire to XRayConfig.instance.chunkRange
 
         int dx = Math.abs(blockChunkX - XRayState.playerChunkX);
         int dz = Math.abs(blockChunkZ - XRayState.playerChunkZ);
@@ -36,7 +36,7 @@ public abstract class BlockRenderMixin {
 
         // Check whitelist
         String blockId = Registries.BLOCK.getId(state.getBlock()).toString();
-        if (XRayState.config != null && XRayState.config.isVisible(blockId)) return;
+        if (XRayConfig.instance.visibleBlocks.contains(blockId)) return;
 
         cir.setReturnValue(Blocks.AIR.getDefaultState());
     }
