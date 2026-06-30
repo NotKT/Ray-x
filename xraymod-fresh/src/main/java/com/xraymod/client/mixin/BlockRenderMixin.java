@@ -1,6 +1,7 @@
 package com.xraymod.client.mixin;
 
 import com.xraymod.client.XRayState;
+import com.xraymod.client.config.XRayConfig;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.render.chunk.ChunkRendererRegion;
@@ -13,7 +14,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ChunkRendererRegion.class)
 public abstract class BlockRenderMixin {
-
     @Inject(
         method = "getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;",
         at = @At("RETURN"),
@@ -25,16 +25,13 @@ public abstract class BlockRenderMixin {
         BlockState state = cir.getReturnValue();
         if (state == null || state.isAir()) return;
 
-        // Check chunk range
         int blockChunkX = pos.getX() >> 4;
         int blockChunkZ = pos.getZ() >> 4;
-        int range = 6; // TODO: wire to XRayConfig.instance.chunkRange
-
+        int range = XRayConfig.instance.chunkRange;
         int dx = Math.abs(blockChunkX - XRayState.playerChunkX);
         int dz = Math.abs(blockChunkZ - XRayState.playerChunkZ);
-        if (dx > range || dz > range) return; // outside range, render normally
+        if (dx > range || dz > range) return;
 
-        // Check whitelist
         String blockId = Registries.BLOCK.getId(state.getBlock()).toString();
         if (XRayConfig.instance.visibleBlocks.contains(blockId)) return;
 
