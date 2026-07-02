@@ -6,11 +6,7 @@
   "client": [
     "BlockRenderMixin",
     "EntityGlowMixin",
-    "FlyMixin",
-    "FastBreakMixin",
-    "ReachMixin",
-    "NoFallMixin",
-    "MaceWindBurstMixin"
+    "FlyMixin"
   ],
   "injectors": {
     "defaultRequire": 1
