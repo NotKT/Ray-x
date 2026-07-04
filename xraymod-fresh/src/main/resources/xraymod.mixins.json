@@ -5,8 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "BlockRenderMixin",
-    "EntityGlowMixin",
-    "FlyMixin"
+    "EntityGlowMixin"
   ],
   "injectors": {
     "defaultRequire": 1
