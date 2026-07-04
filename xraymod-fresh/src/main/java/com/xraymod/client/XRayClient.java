@@ -15,23 +15,14 @@ import org.lwjgl.glfw.GLFW;
 
 public class XRayClient implements ClientModInitializer {
 
-    // XRay
     private static KeyBinding xrayKey;
     private static boolean xrayHeld = false;
 
-    // Entity Glow
     private static KeyBinding entityGlowKey;
     private static boolean entityGlowHeld = false;
 
-    // Config Screen
     private static KeyBinding configKey;
-
-    // Utility keys
     private static KeyBinding flyKey;
-    private static KeyBinding fastBreakKey;
-    private static KeyBinding reachKey;
-    private static KeyBinding noFallKey;
-    private static KeyBinding maceWindBurstKey;
 
     @Override
     public void onInitializeClient() {
@@ -46,22 +37,12 @@ public class XRayClient implements ClientModInitializer {
             "key.xraymod.entityglow", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_C, cat));
         configKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.xraymod.config", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Z, cat));
-
         flyKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.xraymod.fly", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_V, cat));
-        fastBreakKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.xraymod.fastbreak", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_B, cat));
-        reachKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.xraymod.reach", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_N, cat));
-        noFallKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.xraymod.nofall", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_M, cat));
-        maceWindBurstKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.xraymod.macewindburst", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_J, cat));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.world == null) return;
 
-            // Update player chunk position for XRay range
             XRayState.playerChunkX = client.player.getChunkPos().x;
             XRayState.playerChunkZ = client.player.getChunkPos().z;
 
@@ -119,48 +100,57 @@ public class XRayClient implements ClientModInitializer {
                 client.setScreen(new XRayConfigScreen(client.currentScreen));
             }
 
-            // --- Utility Toggles ---
+            // --- Fly toggle (V key) ---
             if (flyKey.wasPressed()) {
                 XRayState.flyEnabled = !XRayState.flyEnabled;
                 XRayConfig.instance.utility.flyEnabled = XRayState.flyEnabled;
                 XRayConfig.save();
-                // Apply or remove flying ability
-                client.player.getAbilities().allowFlying = XRayState.flyEnabled;
-                if (!XRayState.flyEnabled) {
-                    client.player.getAbilities().flying = false;
-                }
-                client.player.sendAbilitiesUpdate();
+                applyFly(client);
                 sendHudMessage(client, "Fly: " + (XRayState.flyEnabled ? "ON" : "OFF"));
             }
 
-            if (fastBreakKey.wasPressed()) {
-                XRayState.fastBreakEnabled = !XRayState.fastBreakEnabled;
-                XRayConfig.instance.utility.fastBreakEnabled = XRayState.fastBreakEnabled;
-                XRayConfig.save();
-                sendHudMessage(client, "Fast Break: " + (XRayState.fastBreakEnabled ? "ON" : "OFF"));
-            }
-
-            if (reachKey.wasPressed()) {
-                XRayState.reachEnabled = !XRayState.reachEnabled;
-                XRayConfig.instance.utility.reachEnabled = XRayState.reachEnabled;
-                XRayConfig.save();
-                sendHudMessage(client, "Reach: " + (XRayState.reachEnabled ? "ON" : "OFF"));
-            }
-
-            if (noFallKey.wasPressed()) {
-                XRayState.noFallEnabled = !XRayState.noFallEnabled;
-                XRayConfig.instance.utility.noFallEnabled = XRayState.noFallEnabled;
-                XRayConfig.save();
-                sendHudMessage(client, "No Fall: " + (XRayState.noFallEnabled ? "ON" : "OFF"));
-            }
-
-            if (maceWindBurstKey.wasPressed()) {
-                XRayState.maceWindBurstEnabled = !XRayState.maceWindBurstEnabled;
-                XRayConfig.instance.utility.maceWindBurstEnabled = XRayState.maceWindBurstEnabled;
-                XRayConfig.save();
-                sendHudMessage(client, "Mace Wind Burst: " + (XRayState.maceWindBurstEnabled ? "ON" : "OFF"));
+            // --- Apply fly every tick ---
+            if (XRayState.flyEnabled) {
+                applyFly(client);
             }
         });
+    }
+
+    private void applyFly(MinecraftClient client) {
+        if (client.player == null) return;
+        String module = XRayConfig.instance.utility.flyModule;
+        float speed = XRayConfig.instance.utility.flySpeed;
+
+        if (!XRayState.flyEnabled) {
+            client.player.getAbilities().allowFlying = false;
+            client.player.getAbilities().flying = false;
+            client.player.getAbilities().setFlySpeed(0.05f);
+            client.player.sendAbilitiesUpdate();
+            return;
+        }
+
+        switch (module) {
+            case "Elytra":
+                client.player.getAbilities().allowFlying = true;
+                client.player.getAbilities().setFlySpeed(speed * 0.5f);
+                client.player.sendAbilitiesUpdate();
+                break;
+            case "Jetpack":
+                client.player.getAbilities().allowFlying = true;
+                client.player.getAbilities().setFlySpeed(speed * 1.5f);
+                client.player.sendAbilitiesUpdate();
+                break;
+            case "Glide":
+                client.player.getAbilities().allowFlying = true;
+                client.player.getAbilities().setFlySpeed(speed * 0.3f);
+                client.player.sendAbilitiesUpdate();
+                break;
+            default: // Vanilla
+                client.player.getAbilities().allowFlying = true;
+                client.player.getAbilities().setFlySpeed(speed);
+                client.player.sendAbilitiesUpdate();
+                break;
+        }
     }
 
     private void sendHudMessage(MinecraftClient client, String msg) {
