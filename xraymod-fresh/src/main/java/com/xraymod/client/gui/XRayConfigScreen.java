@@ -373,32 +373,28 @@ public class XRayConfigScreen extends Screen {
     }
 
     private void initUtilitySettings() {
-        // Utility sub-tab: Fly
+        // Sub-tab buttons along the top
         addDrawableChild(ButtonWidget.builder(
             Text.literal(utilitySubTab == 0 ? "\u00a7aFly" : "\u00a77Fly"), btn -> {
                 utilitySubTab = 0; init();
-            }).dimensions(10, 10, 60, 18).build());
+            }).dimensions(10, 35, 50, 16).build());
 
         if (utilitySubTab == 0) initFlySettings();
     }
 
     private void initFlySettings() {
-        int y = 40;
-
-        // ON/OFF toggle
+        // All controls packed tightly starting at y=60, left-aligned at x=10
+        // Row 1: Fly ON/OFF — button at x=90 (label "Fly" drawn at x=10 in render)
         boolean flyOn = XRayConfig.instance.utility.flyEnabled;
         addDrawableChild(ButtonWidget.builder(
-            Text.literal("Fly: " + (flyOn ? "\u00a7aON" : "\u00a7cOFF")), btn -> {
+            Text.literal(flyOn ? "\u00a7aON" : "\u00a7cOFF"), btn -> {
                 XRayConfig.instance.utility.flyEnabled = !XRayConfig.instance.utility.flyEnabled;
                 XRayState.flyEnabled = XRayConfig.instance.utility.flyEnabled;
                 XRayConfig.save();
                 init();
-            }).dimensions(10, y, 100, 20).build());
+            }).dimensions(90, 60, 50, 16).build());
 
-        y += 30;
-
-        // Module selector
-        addDrawableChild(ButtonWidget.builder(Text.literal("Module:"), btn -> {}).dimensions(10, y, 60, 20).build());
+        // Row 2: Module buttons — label "Mode" drawn in render at x=10
         for (int i = 0; i < FLY_MODULES.length; i++) {
             final String mod = FLY_MODULES[i];
             boolean selected = mod.equals(XRayConfig.instance.utility.flyModule);
@@ -408,29 +404,33 @@ public class XRayConfigScreen extends Screen {
                     XRayState.flyModule = mod;
                     XRayConfig.save();
                     init();
-                }).dimensions(75 + i * 75, y, 70, 20).build());
+                }).dimensions(90 + i * 40, 80, 38, 16).build());
         }
 
-        y += 30;
-
-        // Speed control
-        addDrawableChild(ButtonWidget.builder(Text.literal("Speed: -"), btn -> {
+        // Row 3: Speed — label "Speed" drawn in render at x=10
+        addDrawableChild(ButtonWidget.builder(Text.literal("-"), btn -> {
             XRayConfig.instance.utility.flySpeed = Math.max(0.01f,
-                XRayConfig.instance.utility.flySpeed - 0.02f);
+                XRayConfig.instance.utility.flySpeed - 0.01f);
             XRayConfig.save();
             init();
-        }).dimensions(10, y, 50, 20).build());
+        }).dimensions(90, 100, 20, 16).build());
 
         addDrawableChild(ButtonWidget.builder(
-            Text.literal(String.format("%.2f", XRayConfig.instance.utility.flySpeed)), btn -> {
-            }).dimensions(65, y, 60, 20).build());
+            Text.literal(String.format("%.2f", XRayConfig.instance.utility.flySpeed)),
+            btn -> {}).dimensions(113, 100, 40, 16).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Speed: +"), btn -> {
+        addDrawableChild(ButtonWidget.builder(Text.literal("+"), btn -> {
             XRayConfig.instance.utility.flySpeed = Math.min(1.0f,
-                XRayConfig.instance.utility.flySpeed + 0.02f);
+                XRayConfig.instance.utility.flySpeed + 0.01f);
             XRayConfig.save();
             init();
-        }).dimensions(130, y, 50, 20).build());
+        }).dimensions(156, 100, 20, 16).build());
+
+        addDrawableChild(ButtonWidget.builder(Text.literal("Reset"), btn -> {
+            XRayConfig.instance.utility.flySpeed = 0.05f;
+            XRayConfig.save();
+            init();
+        }).dimensions(180, 100, 40, 16).build());
     }
 
     private void initBlocksSettings() {
@@ -612,6 +612,17 @@ public class XRayConfigScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, width, height, 0xCC000000);
+
+        if (activeTab == 2) {
+            context.drawText(textRenderer, "Utility", 10, 25, 0xFF00BFFF, true);
+            // Fly panel box
+            context.fill(7, 54, 230, 122, 0x33FFFFFF);
+            context.fill(7, 54, 230, 55, 0x88FFFFFF); // top border
+            // Row labels
+            context.drawText(textRenderer, "Fly", 66, 64, 0xFFFFFFFF, true);
+            context.drawText(textRenderer, "Mode", 66, 84, 0xFFAAAAAA, true);
+            context.drawText(textRenderer, "Speed", 66, 104, 0xFFAAAAAA, true);
+        }
 
         if (activeTab == 0 || activeTab == 1) {
             context.fill(SPLIT, LIST_TOP - 10, SPLIT + 1, height - LIST_BOTTOM_MARGIN, 0x88FFFFFF);
