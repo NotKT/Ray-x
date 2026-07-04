@@ -11,11 +11,8 @@ public class XRayState {
 
     // Fullbright
     public static boolean fullbrightActive = false;
-    
+
     // Utility
     public static boolean flyEnabled = false;
-    public static boolean fastBreakEnabled = false;
-    public static boolean reachEnabled = false;
-    public static boolean noFallEnabled = false;
-    public static boolean maceWindBurstEnabled = false;
+    public static String flyModule = "Vanilla";
 }
