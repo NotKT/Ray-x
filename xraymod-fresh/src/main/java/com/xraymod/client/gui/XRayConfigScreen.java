@@ -20,12 +20,19 @@ public class XRayConfigScreen extends Screen {
     private TextFieldWidget rangeField;
     private int whitelistScrollOffset = 0;
     private int searchScrollOffset = 0;
-    private boolean showingEntities = false;
+
+    // 0 = Blocks, 1 = Entities, 2 = Utility
+    private int activeTab = 0;
+    // For utility sub-tabs: 0 = Fly
+    private int utilitySubTab = 0;
+
     private String searchQuery = "";
     private static final int ROW_HEIGHT = 20;
     private static final int LIST_TOP = 110;
     private static final int LIST_BOTTOM_MARGIN = 55;
     private static final int SPLIT = 340;
+
+    private static final String[] FLY_MODULES = {"Vanilla", "Elytra", "Jetpack", "Glide"};
 
     private static final List<String> ALL_BLOCKS = Arrays.asList(
         "minecraft:acacia_button","minecraft:acacia_door","minecraft:acacia_fence","minecraft:acacia_fence_gate",
@@ -321,48 +328,109 @@ public class XRayConfigScreen extends Screen {
     @Override
     protected void init() {
         clearChildren();
-        searchQuery = searchField != null ? searchField.getText() : "";
 
-        searchField = new TextFieldWidget(
-            textRenderer, 5, 10, SPLIT - 15, 18,
-            Text.literal("Search"));
-        searchField.setPlaceholder(Text.literal(showingEntities ? "Search entities..." : "Search blocks..."));
-        searchField.setText(searchQuery);
-        searchField.setChangedListener(text -> {
-            searchQuery = text;
-            init();
-        });
-        addDrawableChild(searchField);
-        setInitialFocus(searchField);
-
-        if (!showingEntities) {
-            initBlocksSettings();
-        } else {
-            initEntitiesSettings();
+        if (activeTab == 0 || activeTab == 1) {
+            searchQuery = searchField != null ? searchField.getText() : "";
+            searchField = new TextFieldWidget(
+                textRenderer, 5, 10, SPLIT - 15, 18,
+                Text.literal("Search"));
+            searchField.setPlaceholder(Text.literal(activeTab == 1 ? "Search entities..." : "Search blocks..."));
+            searchField.setText(searchQuery);
+            searchField.setChangedListener(text -> {
+                searchQuery = text;
+                init();
+            });
+            addDrawableChild(searchField);
+            setInitialFocus(searchField);
         }
 
+        if (activeTab == 0) initBlocksSettings();
+        else if (activeTab == 1) initEntitiesSettings();
+        else initUtilitySettings();
+
+        // Bottom tabs
         addDrawableChild(ButtonWidget.builder(
-            Text.literal(showingEntities ? "\u00a77Blocks" : "\u00a7aBlocks"), btn -> {
-                showingEntities = false;
-                searchQuery = "";
-                whitelistScrollOffset = 0;
-                searchScrollOffset = 0;
-                init();
-            }).dimensions(10, height - 28, 80, 20).build());
+            Text.literal(activeTab == 0 ? "\u00a7aBlocks" : "\u00a77Blocks"), btn -> {
+                activeTab = 0; searchQuery = "";
+                whitelistScrollOffset = 0; searchScrollOffset = 0; init();
+            }).dimensions(10, height - 28, 70, 20).build());
 
         addDrawableChild(ButtonWidget.builder(
-            Text.literal(showingEntities ? "\u00a7aEntities" : "\u00a77Entities"), btn -> {
-                showingEntities = true;
-                searchQuery = "";
-                whitelistScrollOffset = 0;
-                searchScrollOffset = 0;
-                init();
-            }).dimensions(95, height - 28, 80, 20).build());
+            Text.literal(activeTab == 1 ? "\u00a7aEntities" : "\u00a77Entities"), btn -> {
+                activeTab = 1; searchQuery = "";
+                whitelistScrollOffset = 0; searchScrollOffset = 0; init();
+            }).dimensions(85, height - 28, 70, 20).build());
+
+        addDrawableChild(ButtonWidget.builder(
+            Text.literal(activeTab == 2 ? "\u00a7aUtility" : "\u00a77Utility"), btn -> {
+                activeTab = 2; init();
+            }).dimensions(160, height - 28, 70, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Done"), btn -> {
             assert client != null;
             client.setScreen(parent);
         }).dimensions(width - 90, height - 28, 80, 20).build());
+    }
+
+    private void initUtilitySettings() {
+        // Utility sub-tab: Fly
+        addDrawableChild(ButtonWidget.builder(
+            Text.literal(utilitySubTab == 0 ? "\u00a7aFly" : "\u00a77Fly"), btn -> {
+                utilitySubTab = 0; init();
+            }).dimensions(10, 10, 60, 18).build());
+
+        if (utilitySubTab == 0) initFlySettings();
+    }
+
+    private void initFlySettings() {
+        int y = 40;
+
+        // ON/OFF toggle
+        boolean flyOn = XRayConfig.instance.utility.flyEnabled;
+        addDrawableChild(ButtonWidget.builder(
+            Text.literal("Fly: " + (flyOn ? "\u00a7aON" : "\u00a7cOFF")), btn -> {
+                XRayConfig.instance.utility.flyEnabled = !XRayConfig.instance.utility.flyEnabled;
+                XRayState.flyEnabled = XRayConfig.instance.utility.flyEnabled;
+                XRayConfig.save();
+                init();
+            }).dimensions(10, y, 100, 20).build());
+
+        y += 30;
+
+        // Module selector
+        addDrawableChild(ButtonWidget.builder(Text.literal("Module:"), btn -> {}).dimensions(10, y, 60, 20).build());
+        for (int i = 0; i < FLY_MODULES.length; i++) {
+            final String mod = FLY_MODULES[i];
+            boolean selected = mod.equals(XRayConfig.instance.utility.flyModule);
+            addDrawableChild(ButtonWidget.builder(
+                Text.literal(selected ? "\u00a7a" + mod : mod), btn -> {
+                    XRayConfig.instance.utility.flyModule = mod;
+                    XRayState.flyModule = mod;
+                    XRayConfig.save();
+                    init();
+                }).dimensions(75 + i * 75, y, 70, 20).build());
+        }
+
+        y += 30;
+
+        // Speed control
+        addDrawableChild(ButtonWidget.builder(Text.literal("Speed: -"), btn -> {
+            XRayConfig.instance.utility.flySpeed = Math.max(0.01f,
+                XRayConfig.instance.utility.flySpeed - 0.02f);
+            XRayConfig.save();
+            init();
+        }).dimensions(10, y, 50, 20).build());
+
+        addDrawableChild(ButtonWidget.builder(
+            Text.literal(String.format("%.2f", XRayConfig.instance.utility.flySpeed)), btn -> {
+            }).dimensions(65, y, 60, 20).build());
+
+        addDrawableChild(ButtonWidget.builder(Text.literal("Speed: +"), btn -> {
+            XRayConfig.instance.utility.flySpeed = Math.min(1.0f,
+                XRayConfig.instance.utility.flySpeed + 0.02f);
+            XRayConfig.save();
+            init();
+        }).dimensions(130, y, 50, 20).build());
     }
 
     private void initBlocksSettings() {
@@ -377,9 +445,7 @@ public class XRayConfigScreen extends Screen {
             }).dimensions(SPLIT + 5 + i * 38, rangeY, 34, 18).build());
         }
 
-        rangeField = new TextFieldWidget(
-            textRenderer, SPLIT + 165, rangeY, 30, 16,
-            Text.literal("Range"));
+        rangeField = new TextFieldWidget(textRenderer, SPLIT + 165, rangeY, 30, 16, Text.literal("Range"));
         rangeField.setPlaceholder(Text.literal("6"));
         rangeField.setText(String.valueOf(XRayConfig.instance.chunkRange));
         addDrawableChild(rangeField);
@@ -462,9 +528,7 @@ public class XRayConfigScreen extends Screen {
             }).dimensions(SPLIT + 5 + i * 38, rangeY, 34, 18).build());
         }
 
-        TextFieldWidget entityRangeField = new TextFieldWidget(
-            textRenderer, SPLIT + 165, rangeY, 30, 16,
-            Text.literal("Range"));
+        TextFieldWidget entityRangeField = new TextFieldWidget(textRenderer, SPLIT + 165, rangeY, 30, 16, Text.literal("Range"));
         entityRangeField.setPlaceholder(Text.literal("6"));
         entityRangeField.setText(String.valueOf(XRayConfig.instance.entityGlowRange));
         addDrawableChild(entityRangeField);
@@ -530,9 +594,7 @@ public class XRayConfigScreen extends Screen {
     private List<String> getSearchResults(List<String> source, String query) {
         if (query == null || query.isEmpty()) return new ArrayList<>(source);
         String lower = query.toLowerCase();
-        return source.stream()
-            .filter(s -> s.contains(lower))
-            .collect(Collectors.toList());
+        return source.stream().filter(s -> s.contains(lower)).collect(Collectors.toList());
     }
 
     private List<String> getSortedBlocks() {
@@ -551,60 +613,58 @@ public class XRayConfigScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, width, height, 0xCC000000);
 
-        context.fill(SPLIT, LIST_TOP - 10, SPLIT + 1, height - LIST_BOTTOM_MARGIN, 0x88FFFFFF);
-        context.fill(0, LIST_TOP - 5, width, LIST_TOP - 4, 0x88FFFFFF);
-        context.fill(0, height - LIST_BOTTOM_MARGIN + 5, width,
-            height - LIST_BOTTOM_MARGIN + 6, 0x88FFFFFF);
+        if (activeTab == 0 || activeTab == 1) {
+            context.fill(SPLIT, LIST_TOP - 10, SPLIT + 1, height - LIST_BOTTOM_MARGIN, 0x88FFFFFF);
+            context.fill(0, LIST_TOP - 5, width, LIST_TOP - 4, 0x88FFFFFF);
+            context.fill(0, height - LIST_BOTTOM_MARGIN + 5, width, height - LIST_BOTTOM_MARGIN + 6, 0x88FFFFFF);
 
-        context.drawText(textRenderer,
-            showingEntities ? "All Entities (click to add)" : "All Blocks (click to add)",
-            5, LIST_TOP - 18, 0xFF00BFFF, true);
-        context.drawText(textRenderer,
-            showingEntities ? "Glow List" : "XRay Whitelist",
-            SPLIT + 5, LIST_TOP - 18, 0xFF00BFFF, true);
+            context.drawText(textRenderer,
+                activeTab == 1 ? "All Entities (click to add)" : "All Blocks (click to add)",
+                5, LIST_TOP - 18, 0xFF00BFFF, true);
+            context.drawText(textRenderer,
+                activeTab == 1 ? "Glow List" : "XRay Whitelist",
+                SPLIT + 5, LIST_TOP - 18, 0xFF00BFFF, true);
+            context.drawText(textRenderer,
+                activeTab == 1 ? "Glow Range:" : "XRay Range:",
+                SPLIT + 5, 30, 0xFFFFAA00, true);
 
-        context.drawText(textRenderer,
-            showingEntities ? "Glow Range:" : "XRay Range:",
-            SPLIT + 5, 30, 0xFFFFAA00, true);
-
-        List<String> whitelist = showingEntities ? getSortedGlowEntities() : getSortedBlocks();
-        int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
-        int visibleRows = listHeight / ROW_HEIGHT;
-        for (int i = 0; i < visibleRows && (i + whitelistScrollOffset) < whitelist.size(); i++) {
-            String id = whitelist.get(i + whitelistScrollOffset);
-            int y = LIST_TOP + i * ROW_HEIGHT;
-            if (i % 2 == 0) context.fill(SPLIT + 1, y, width, y + ROW_HEIGHT, 0x22FFFFFF);
-            context.drawText(textRenderer, id, SPLIT + 5, y + 5, 0xFFFFFF00, true);
-        }
-
-        if (whitelist.isEmpty()) {
-            context.drawText(textRenderer, "Empty", SPLIT + 5, LIST_TOP + 5, 0xFF888888, true);
+            List<String> whitelist = activeTab == 1 ? getSortedGlowEntities() : getSortedBlocks();
+            int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
+            int visibleRows = listHeight / ROW_HEIGHT;
+            for (int i = 0; i < visibleRows && (i + whitelistScrollOffset) < whitelist.size(); i++) {
+                String id = whitelist.get(i + whitelistScrollOffset);
+                int y = LIST_TOP + i * ROW_HEIGHT;
+                if (i % 2 == 0) context.fill(SPLIT + 1, y, width, y + ROW_HEIGHT, 0x22FFFFFF);
+                context.drawText(textRenderer, id, SPLIT + 5, y + 5, 0xFFFFFF00, true);
+            }
+            if (whitelist.isEmpty()) {
+                context.drawText(textRenderer, "Empty", SPLIT + 5, LIST_TOP + 5, 0xFF888888, true);
+            }
         }
 
         super.render(context, mouseX, mouseY, delta);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY,
-                                  double horizontalAmount, double verticalAmount) {
-        if (mouseX < SPLIT) {
-            List<String> results = showingEntities
-                ? getSearchResults(ALL_ENTITIES, searchQuery)
-                : getSearchResults(ALL_BLOCKS, searchQuery);
-            int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
-            int visibleRows = listHeight / ROW_HEIGHT;
-            int maxScroll = Math.max(0, results.size() - visibleRows);
-            searchScrollOffset = Math.max(0, Math.min(maxScroll,
-                searchScrollOffset - (int) verticalAmount));
-        } else {
-            List<String> whitelist = showingEntities ? getSortedGlowEntities() : getSortedBlocks();
-            int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
-            int visibleRows = listHeight / ROW_HEIGHT;
-            int maxScroll = Math.max(0, whitelist.size() - visibleRows);
-            whitelistScrollOffset = Math.max(0, Math.min(maxScroll,
-                whitelistScrollOffset - (int) verticalAmount));
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (activeTab == 0 || activeTab == 1) {
+            if (mouseX < SPLIT) {
+                List<String> results = activeTab == 1
+                    ? getSearchResults(ALL_ENTITIES, searchQuery)
+                    : getSearchResults(ALL_BLOCKS, searchQuery);
+                int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
+                int visibleRows = listHeight / ROW_HEIGHT;
+                int maxScroll = Math.max(0, results.size() - visibleRows);
+                searchScrollOffset = Math.max(0, Math.min(maxScroll, searchScrollOffset - (int) verticalAmount));
+            } else {
+                List<String> whitelist = activeTab == 1 ? getSortedGlowEntities() : getSortedBlocks();
+                int listHeight = height - LIST_TOP - LIST_BOTTOM_MARGIN;
+                int visibleRows = listHeight / ROW_HEIGHT;
+                int maxScroll = Math.max(0, whitelist.size() - visibleRows);
+                whitelistScrollOffset = Math.max(0, Math.min(maxScroll, whitelistScrollOffset - (int) verticalAmount));
+            }
+            init();
         }
-        init();
         return true;
     }
 
